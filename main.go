@@ -17,6 +17,7 @@ func main() {
 	})
 
 	http.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("web/js"))))
+	http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("web/css"))))
 
 	fmt.Println("Listening To 127.0.0.1:8080")
 	if err := http.ListenAndServe("127.0.0.1:8080", nil); err != nil && err != http.ErrServerClosed {

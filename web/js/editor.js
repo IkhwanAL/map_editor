@@ -1,14 +1,28 @@
 /**
  * @type {HTMLCanvasElement}
  */
-const canvas = document.getElementById("editor")
+const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
 
-const mapWidth = canvas.width
-const mapHeight = canvas.height
-const tileSize = 16
+const editor = document.getElementById("editor")
+
+let mapWidth = canvas.width
+let mapHeight = canvas.height
+const tileSize = 5
 
 let map = []
+
+// This Function is Get Actual Canvas Size Because There's A DOM to consider and it follow the size of browser
+function getActualCanvasSize() {
+  const editorRect = editor.getBoundingClientRect()
+
+  mapWidth = editorRect.width
+  mapHeight = editorRect.height
+
+  canvas.width = mapWidth
+  canvas.height = mapHeight
+
+}
 
 function generateMap() {
   for (let y = 0; y < mapHeight; y++) {
@@ -28,5 +42,6 @@ function drawMap() {
   }
 }
 
+getActualCanvasSize()
 generateMap()
 drawMap()
