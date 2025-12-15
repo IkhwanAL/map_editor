@@ -8,6 +8,10 @@ import (
 	"github.com/IkhwanAL/mapeditor/ui"
 )
 
+func IsMethodCorrect(request *http.Request, method string) bool {
+	return request.Method == method
+}
+
 func main() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		err := ui.MainPage().Render(r.Context(), w)

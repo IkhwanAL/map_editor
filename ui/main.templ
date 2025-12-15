@@ -7,13 +7,16 @@ templ MainPage() {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<script type="module" src="js/editor.js"></script>
+			<script type="module" src="js/random.js"></script>
+			<script type="module" src="js/noise.js"></script>
+			<script type="module" src="js/test.js"></script>
 			<link rel="stylesheet" href="css/index.css"/>
 			<link rel="stylesheet" href="css/editor.css"/>
 			<title>Map Editor</title>
 		</head>
 		<body>
 			<div class="page">
-				<div class="sidebar">Sidebar</div>
+				@SidebarPage()
 				@EditorPage()
 			</div>
 		</body>
