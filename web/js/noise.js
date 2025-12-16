@@ -98,28 +98,44 @@ export function perlinNoise(x, y, PERM) {
 }
 
 export const defaultFractalOption = {
-  octaves: 4,
-  persistance: 0.5,
-  lacunarity: 2.0,
+  octaves: 8,
+  persistence: 0.1,
+  lacunarity: 1,
+  canvasWidth: 500,
+  canvasHeight: 500,
+  frequency: 1.0,
+  amplitude: 1.0
 }
 
 export function FractalNoise(x, y, PERM, option = defaultFractalOption) {
   let total = 0.0;
-  let frequency = 0.01
-  let amplitude = 1.0
-
   let maxValue = 0.0
 
-  const { lacunarity, octaves, persistance } = option
+  const { lacunarity, octaves, persistence, canvasWidth, canvasHeight, ...options } = option
+  let { frequency, amplitude } = options
+
+  // const nx = x / canvasWidth
+  // const ny = y / canvasHeight
+
+  // const featureSize = 400
+  // const scaleW = defaultFractalOption.canvasWidth / featureSize
+  // const scaleH = defaultFractalOption.canvasHeight / featureSize
+  // const scale = Math.max(canvasWidth, canvasHeight) / featureSize
 
   for (let i = 0; i < octaves; i++) {
+    // const n = amplitude * perlinNoise(
+    //   nx * scale * frequency,
+    //   ny * scale * frequency,
+    //   PERM
+    // )
     const n = amplitude * perlinNoise(x * frequency, y * frequency, PERM)
     total += n
     maxValue += amplitude
 
-    amplitude *= persistance
+    amplitude *= persistence
     frequency *= lacunarity
   }
+
 
   return total / maxValue
 }

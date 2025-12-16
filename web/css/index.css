@@ -14,7 +14,8 @@ body {
 }
 
 .sidebar-area {
-  flex: 0 0 150px;
+  flex: 0 0 250px;
+  margin-right: 4px;
 }
 
 .sidebar {
@@ -29,4 +30,22 @@ body {
   margin: 4px;
   font-size: 20px;
   text-align: center;
+}
+
+.generator {
+  width: max-content;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-input input[type="range"] {
+  flex: 1;
+}
+
+.form-input {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }

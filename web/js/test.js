@@ -85,3 +85,29 @@ export function Noise2D(x, y) {
   );
 
 }
+
+
+function test() {
+  let noises = []
+  for (let y = 0; y < 500; y++) {
+    noises[y] = []
+    for (let x = 0; x < 500; x++) {
+      let n = 0.0,
+        a = 1.0,
+        f = 0.005;
+      for (let o = 0; o < 8; o++) {
+        let v = a * Noise2D(x * f, y * f);
+        n += v;
+
+        a *= 0.5;
+        f *= 2.0;
+      }
+
+      // n += 1.0;
+      // n *= 0.5;
+      noises[y][x] = n
+    }
+  }
+
+  map = noises
+}

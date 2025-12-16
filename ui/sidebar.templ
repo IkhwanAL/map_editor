@@ -8,5 +8,33 @@ templ SidebarPage() {
 			<button class="tool">Eraser</button>
 			<button class="tool">Fill</button>
 		</div>
+		<div class="generator">
+			<button id="generateMap">Generate Map</button>
+			<div class="form-input">
+				<label>Octaves</label>
+				<input type="range" min="1" max="10" step="1" value="4" data-key="octaves"/>
+				<input type="number" min="1" max="10" step="1" value="4" data-key="octaves"/>
+			</div>
+			<div class="form-input">
+				<label>Persistence</label>
+				<input type="range" min="0.1" max="1" id="persistence" step="0.05" value="0.5" data-key="persistence"/>
+				<input type="number" id="field" min="1" max="3" step="0.05" value="0.5" data-key="persistence"/>
+			</div>
+			<div class="form-input">
+				<label>Lacunarity</label>
+				<input type="range" min="1" max="3" id="lacunarity" step="0.1" value="2.0" data-key="lacunarity"/>
+				<input type="number" id="field" min="1" max="3" step="0.1" value="2.0" data-key="lacunarity"/>
+			</div>
+			<div class="form-input">
+				<label>Frequency</label>
+				<input type="range" min="0.005" max="0.2" id="frequency" step="0.005" value="0.01" data-key="frequency"/>
+				<input type="number" id="field" min="0.005" max="0.2" step="0.005" value="0.01" data-key="frequency"/>
+			</div>
+			<div class="form-input">
+				<label>Amplitude</label>
+				<input type="range" min="0.5" max="2" id="amplitude" step="0.5" value="1.0" data-key="amplitude"/>
+				<input type="number" id="field" min="0.5" max="2" step="0.5" value="1.0" data-key="amplitude"/>
+			</div>
+		</div>
 	</div>
 }
