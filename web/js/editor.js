@@ -1,6 +1,6 @@
 import { FractalNoise, NewPermutationTable } from "./noise.js"
 import { sfc32 } from "./random.js"
-import { debounce } from "./util.js"
+import { debounce, clamp } from "./util.js"
 
 /**
  * @type {HTMLCanvasElement}
@@ -19,7 +19,8 @@ let editorState = {
   seed2: null,
   seed3: null,
   seed4: null,
-  map: []
+  map: [],
+  permutationTable: []
 }
 
 /**
@@ -40,15 +41,16 @@ function getActualCanvasSize() {
   ctxImageData = ctx.createImageData(mapWidth, mapHeight)
 }
 
+getActualCanvasSize()
+
 function drawMap() {
   const { map } = editorState
 
-  console.time("Render To Canvas")
   let index = 0
   for (let y = 0; y < map.length; y++) {
     for (let x = 0; x < map[y].length; x++) {
       const grid = map[y][x]
-      const n = grid * 255 | 0
+      const n = clamp(grid * 255 | 0, 0, 255)
       ctxImageData.data[index++] = n
       ctxImageData.data[index++] = n
       ctxImageData.data[index++] = n
@@ -57,7 +59,6 @@ function drawMap() {
   }
 
   ctx.putImageData(ctxImageData, 0, 0)
-  console.timeEnd("Render To Canvas")
 }
 
 let option = {}
@@ -94,8 +95,7 @@ inputGenerator.forEach(input => {
   input.addEventListener("input", inputControl)
 })
 
-function mapGenerator(options) {
-
+function setupGenerator() {
   const genSeed = () => (Math.random() * 2 ** 32) >> 0
 
   editorState.seed1 = genSeed()
@@ -107,6 +107,14 @@ function mapGenerator(options) {
 
   const perm = NewPermutationTable(rand)
 
+  editorState.permutationTable = perm
+}
+
+setupGenerator()
+
+function mapGenerator(options) {
+  const { permutationTable } = editorState
+
   let noises = []
 
   let max = -Infinity
@@ -115,11 +123,12 @@ function mapGenerator(options) {
   options.canvasWidth = canvas.width
   options.canvasHeight = canvas.height
 
-  console.time("Generator Speed")
+  console.log(editorState.width, editorState.height)
+
   for (let y = 0; y < mapHeight; y++) {
     noises[y] = []
     for (let x = 0; x < mapWidth; x++) {
-      const noise = FractalNoise(x, y, perm, options)
+      const noise = FractalNoise(x, y, permutationTable, options)
 
       if (noise > max) {
         max = noise
@@ -135,7 +144,6 @@ function mapGenerator(options) {
 
   editorState.map = normalizeNoise(noises, min, max)
 
-  console.timeEnd("Generator Speed")
 }
 
 /**
@@ -153,5 +161,3 @@ function normalizeNoise(noises, min, max) {
 
   return noises
 }
-
-getActualCanvasSize()
