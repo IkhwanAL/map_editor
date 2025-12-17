@@ -1,14 +1,3 @@
-export class Vec2 {
-  /**
-  * @param {Number} x
-  * @param {Number} y 
-  */
-  constructor(x, y) {
-    this.x = x
-    this.y = y
-  }
-}
-
 export function NewPermutationTable(rand) {
   const perm = new Array(256)
 
@@ -30,10 +19,10 @@ export function NewPermutationTable(rand) {
 const INV_SQRT2 = 1 / Math.sqrt(2)
 
 const GRADIENTS = [
-  { x: INV_SQRT2, y: INV_SQRT2 },
-  { x: -INV_SQRT2, y: INV_SQRT2 },
-  { x: -INV_SQRT2, y: -INV_SQRT2 },
-  { x: INV_SQRT2, y: -INV_SQRT2 },
+  [INV_SQRT2, INV_SQRT2],
+  [-INV_SQRT2, INV_SQRT2],
+  [-INV_SQRT2, -INV_SQRT2],
+  [INV_SQRT2, -INV_SQRT2]
 ]
 function getGradient(x) {
   const v = x & 3
@@ -41,16 +30,16 @@ function getGradient(x) {
   switch (v) {
     case 0:
       return GRADIENTS[0]
-    // return new Vec2(1.0, 1.0)
+    // return [1.0, 1.0]
     case 1:
       return GRADIENTS[1]
-    // return new Vec2(-1.0, 1.0)
+    // return [-1.0, 1.0]
     case 2:
       return GRADIENTS[2]
-    // return new Vec2(-1.0, -1.0)
+    // return [-1.0, -1.0]
     default:
       return GRADIENTS[3]
-    // return new Vec2(1.0, -1.0)
+    // return [1.0, -1.0]
   }
 }
 
@@ -64,10 +53,11 @@ export function perlinNoise(x, y, PERM) {
   const xf = x - floorX
   const yf = y - floorY
 
-  const topRightVecToPoint = new Vec2(xf - 1.0, yf - 1.0)
-  const topLeftVecToPoint = new Vec2(xf, yf - 1.0)
-  const bottomRightVecToPoint = new Vec2(xf - 1.0, yf)
-  const bottomLeftVecToPoint = new Vec2(xf, yf)
+  // Change To Array Instead Of Object
+  const topRightVecToPoint = [xf - 1.0, yf - 1.0]
+  const topLeftVecToPoint = [xf, yf - 1.0]
+  const bottomRightVecToPoint = [xf - 1.0, yf]
+  const bottomLeftVecToPoint = [xf, yf]
 
   let loc
 
@@ -140,13 +130,9 @@ export function FractalNoise(x, y, PERM, option = defaultFractalOption) {
   return total / maxValue
 }
 
-/**
-  * @param {Vec2} vec1
-  * @param {Vec2} vec2
-  * 
-  */
+// vec1 and vec2 use array not object
 function dot(vec1, vec2) {
-  return (vec1.x * vec2.x) + (vec1.y * vec2.y)
+  return (vec1[0] * vec2[0]) + (vec1[1] * vec2[1])
 }
 
 function fade(t) {
