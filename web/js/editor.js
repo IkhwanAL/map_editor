@@ -10,35 +10,29 @@ const ctx = canvas.getContext("2d")
 
 const editor = document.getElementById("editor")
 
-let mapWidth = 500
-let mapHeight = 500
-const tileSize = 1
-
 let editorState = {
   seed1: null,
   seed2: null,
   seed3: null,
   seed4: null,
+  width: 500,
+  height: 500,
   map: [],
-  permutationTable: []
+  permutationTable: [],
+  imageData: null
 }
-
-/**
- * @type {ImageData}
- */
-let ctxImageData = null
 
 // This Function is Get Actual Canvas Size Because There's A DOM to consider and it follow the size of browser
 function getActualCanvasSize() {
   const editorRect = editor.getBoundingClientRect()
 
-  mapWidth = Math.ceil(editorRect.width)
-  mapHeight = Math.ceil(editorRect.height)
+  editorState.width = Math.ceil(editorRect.width)
+  editorState.height = Math.ceil(editorRect.height)
 
-  canvas.width = mapWidth
-  canvas.height = mapHeight
+  canvas.width = editorState.width
+  canvas.height = editorState.height
 
-  ctxImageData = ctx.createImageData(mapWidth, mapHeight)
+  editorState.imageData = ctx.createImageData(editorState.width, editorState.height)
 }
 
 getActualCanvasSize()
@@ -51,14 +45,14 @@ function drawMap() {
     for (let x = 0; x < map[y].length; x++) {
       const grid = map[y][x]
       const n = clamp(grid * 255 | 0, 0, 255)
-      ctxImageData.data[index++] = n
-      ctxImageData.data[index++] = n
-      ctxImageData.data[index++] = n
-      ctxImageData.data[index++] = 255
+      editorState.imageData.data[index++] = n
+      editorState.imageData.data[index++] = n
+      editorState.imageData.data[index++] = n
+      editorState.imageData.data[index++] = 255
     }
   }
 
-  ctx.putImageData(ctxImageData, 0, 0)
+  ctx.putImageData(editorState.imageData, 0, 0)
 }
 
 let option = {}
@@ -108,26 +102,26 @@ function setupGenerator() {
   const perm = NewPermutationTable(rand)
 
   editorState.permutationTable = perm
+
+  option.canvasWidth = editorState.width
+  option.canvasHeight = editorState.height
 }
 
 setupGenerator()
 
 function mapGenerator(options) {
-  const { permutationTable } = editorState
+  const { permutationTable, width, height } = editorState
 
   let noises = []
 
   let max = -Infinity
   let min = Infinity
 
-  options.canvasWidth = canvas.width
-  options.canvasHeight = canvas.height
-
   console.log(editorState.width, editorState.height)
 
-  for (let y = 0; y < mapHeight; y++) {
+  for (let y = 0; y < height; y++) {
     noises[y] = []
-    for (let x = 0; x < mapWidth; x++) {
+    for (let x = 0; x < width; x++) {
       const noise = FractalNoise(x, y, permutationTable, options)
 
       if (noise > max) {
@@ -143,7 +137,6 @@ function mapGenerator(options) {
   }
 
   editorState.map = normalizeNoise(noises, min, max)
-
 }
 
 /**
