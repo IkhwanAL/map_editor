@@ -12,16 +12,55 @@ const ctx = canvas.getContext("2d")
 const editor = document.getElementById("editor")
 
 let editorState = {
+  version: 1,
   seed1: null,
   seed2: null,
   seed3: null,
   seed4: null,
   width: 500,
   height: 500,
+  tileSize: 1,
   map: [],
   permutationTable: [],
-  imageData: null
+  imageData: null,
+  generator: {
+    octaves: null,
+    persistence: null,
+    lacunarity: null,
+    frequency: null,
+    amplitude: null
+  },
 }
+
+document.getElementById("saveState").addEventListener("click", ev => {
+  const json = JSON.stringify(editorState)
+  const blob = new Blob([json], { type: "application/json" })
+  const url = URL.createObjectURL(blob)
+
+  const a = document.createElement("a")
+  a.href = url
+  a.download = "test.json"
+  a.click()
+
+  URL.revokeObjectURL(url)
+})
+
+document.getElementById("loadState").addEventListener("change", ev => {
+  const file = ev.target.files[0]
+  if (!file) return
+
+  const reader = new FileReader()
+  reader.onload = e => {
+    const state = JSON.parse(e.target.result)
+
+    editorState = state
+    editorState.imageData = ctx.createImageData(state.width, state.height)
+
+    mapGenerator(editorState.generator)
+    drawMap()
+  }
+  reader.readAsText(file)
+})
 
 // This Function is Get Actual Canvas Size Because There's A DOM to consider and it follow the size of browser
 function getActualCanvasSize() {
@@ -34,6 +73,9 @@ function getActualCanvasSize() {
   canvas.height = editorState.height
 
   editorState.imageData = ctx.createImageData(editorState.width, editorState.height)
+
+  ctx.fillStyle = "#FFF"
+  ctx.fillRect(0, 0, editorState.width, editorState.height)
 }
 
 getActualCanvasSize()
@@ -57,16 +99,15 @@ function drawMap() {
   ctx.putImageData(editorState.imageData, 0, 0)
 }
 
-let option = {}
-
 generateMap.addEventListener("click", () => {
+  let { generator } = editorState
   document.querySelectorAll(".generator .form-input input[type=range]").forEach(input => {
     const key = input.dataset.key
     const value = parseFloat(input.value)
-    option[key] = value
+    generator[key] = value
   })
 
-  mapGenerator(option)
+  mapGenerator(generator)
   drawMap()
 })
 
@@ -82,8 +123,10 @@ const inputControl = debounce(ev => {
     if (el !== source) el.value = value
   })
 
-  option[key] = value
-  mapGenerator(option)
+  let { generator } = editorState
+
+  generator[key] = value
+  mapGenerator(generator)
   drawMap()
 }, 500)
 
@@ -104,14 +147,11 @@ function setupGenerator() {
   const perm = NewPermutationTable(rand)
 
   editorState.permutationTable = perm
-
-  option.canvasWidth = editorState.width
-  option.canvasHeight = editorState.height
 }
 
 setupGenerator()
 
-function mapGenerator(options) {
+function mapGenerator(option) {
   const { permutationTable, width, height } = editorState
 
   let noises = []
@@ -119,15 +159,14 @@ function mapGenerator(options) {
   let max = -Infinity
   let min = Infinity
 
-  console.time("Generate Map")
-
   const sampleHeight = Math.floor(height / 3)
   const sampleWidth = Math.floor(width / 3)
 
+  console.log(option)
   for (let y = 0; y < sampleHeight; y++) {
     noises[y] = []
     for (let x = 0; x < sampleWidth; x++) {
-      const noise = FractalNoise(x, y, permutationTable, options)
+      const noise = FractalNoise(x, y, permutationTable, option)
 
       if (noise > max) {
         max = noise
@@ -142,7 +181,6 @@ function mapGenerator(options) {
   }
 
   editorState.map = normalizeNoise(noises, min, max)
-  console.timeEnd("Generate Map")
 }
 
 /**
