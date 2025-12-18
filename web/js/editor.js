@@ -42,7 +42,7 @@ function drawMap() {
   const { map, width, height } = editorState
 
   const scaledMap = bilinearInterpolation(map, width, height)
-
+  console.log(scaledMap)
   let index = 0
   for (let y = 0; y < scaledMap.length; y++) {
     for (let x = 0; x < scaledMap[y].length; x++) {
@@ -122,8 +122,8 @@ function mapGenerator(options) {
 
   console.time("Generate Map")
 
-  const sampleHeight = height / 3
-  const sampleWidth = width / 3
+  const sampleHeight = Math.floor(height / 3)
+  const sampleWidth = Math.floor(width / 3)
 
   for (let y = 0; y < sampleHeight; y++) {
     noises[y] = []

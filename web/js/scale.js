@@ -3,8 +3,8 @@ export function bilinearInterpolation(map, dx, dy) {
   const maxX = map[0].length
   const maxY = map.length
 
-  const sx = maxX / dx
-  const sy = maxY / dy
+  const sx = (maxX - 1) / (dx - 1)
+  const sy = (maxY - 1) / (dy - 1)
 
   let newMap = new Array(dy)
   for (let y = 0; y < dy; y++) {
@@ -19,8 +19,8 @@ export function bilinearInterpolation(map, dx, dy) {
       let x2 = Math.min(maxX - 1, x1 + 1)
       let y2 = Math.min(maxY - 1, y1 + 1)
 
-      const horizontalDistance = (originalX - x1) / (x2 - x1)
-      const verticalDistance = (originalY - y1) / (y2 - y1)
+      const horizontalDistance = x2 === x1 ? 0 : (originalX - x1) / (x2 - x1)
+      const verticalDistance = y2 == y1 ? 0 : (originalY - y1) / (y2 - y1)
 
       const finalValue = calculateDistibution(horizontalDistance, verticalDistance, x1, x2, y1, y2, map)
 
