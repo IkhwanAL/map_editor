@@ -1,6 +1,7 @@
 import { FractalNoise, NewPermutationTable } from "./noise.js"
 import { sfc32 } from "./random.js"
 import { debounce, clamp } from "./util.js"
+import { bilinearInterpolation } from "./scale.js"
 
 /**
  * @type {HTMLCanvasElement}
@@ -38,12 +39,14 @@ function getActualCanvasSize() {
 getActualCanvasSize()
 
 function drawMap() {
-  const { map } = editorState
+  const { map, width, height } = editorState
+
+  const scaledMap = bilinearInterpolation(map, width, height)
 
   let index = 0
-  for (let y = 0; y < map.length; y++) {
-    for (let x = 0; x < map[y].length; x++) {
-      const grid = map[y][x]
+  for (let y = 0; y < scaledMap.length; y++) {
+    for (let x = 0; x < scaledMap[y].length; x++) {
+      const grid = scaledMap[y][x]
       const n = clamp(grid * 255 | 0, 0, 255)
       editorState.imageData.data[index++] = n
       editorState.imageData.data[index++] = n
@@ -117,11 +120,14 @@ function mapGenerator(options) {
   let max = -Infinity
   let min = Infinity
 
-  console.log(editorState.width, editorState.height)
+  console.time("Generate Map")
 
-  for (let y = 0; y < height; y++) {
+  const sampleHeight = height / 3
+  const sampleWidth = width / 3
+
+  for (let y = 0; y < sampleHeight; y++) {
     noises[y] = []
-    for (let x = 0; x < width; x++) {
+    for (let x = 0; x < sampleWidth; x++) {
       const noise = FractalNoise(x, y, permutationTable, options)
 
       if (noise > max) {
@@ -137,6 +143,7 @@ function mapGenerator(options) {
   }
 
   editorState.map = normalizeNoise(noises, min, max)
+  console.timeEnd("Generate Map")
 }
 
 /**

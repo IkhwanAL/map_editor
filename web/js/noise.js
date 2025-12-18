@@ -104,20 +104,7 @@ export function FractalNoise(x, y, PERM, option = defaultFractalOption) {
   const { lacunarity, octaves, persistence, canvasWidth, canvasHeight, ...options } = option
   let { frequency, amplitude } = options
 
-  // const nx = x / canvasWidth
-  // const ny = y / canvasHeight
-
-  // const featureSize = 400
-  // const scaleW = defaultFractalOption.canvasWidth / featureSize
-  // const scaleH = defaultFractalOption.canvasHeight / featureSize
-  // const scale = Math.max(canvasWidth, canvasHeight) / featureSize
-
   for (let i = 0; i < octaves; i++) {
-    // const n = amplitude * perlinNoise(
-    //   nx * scale * frequency,
-    //   ny * scale * frequency,
-    //   PERM
-    // )
     const n = amplitude * perlinNoise(x * frequency, y * frequency, PERM)
     total += n
     maxValue += amplitude
