@@ -30,9 +30,33 @@ let editorState = {
     frequency: null,
     amplitude: null
   },
+  dirty: false
 }
 
-document.getElementById("saveState").addEventListener("click", ev => {
+const overlay = document.getElementById("newMapOverlay")
+// const modal = document.getElementById("newMapModal")
+
+document.getElementById("newCanvas").addEventListener("click", _ => {
+  overlay.style.display = "block"
+})
+
+document.getElementById("closeModal").addEventListener("click", _ => {
+  overlay.style.display = "none"
+})
+
+document.querySelector(".modal").childNodes.forEach(node => {
+  node.addEventListener("click", ev => ev.stopPropagation())
+})
+
+overlay.addEventListener("click", ev => {
+  if (ev.target === overlay) {
+    console.log("Outside Modal")
+    overlay.style.display = "none"
+  }
+})
+
+// Need To Change In the Future
+document.getElementById("saveCanvas").addEventListener("click", _ => {
   const json = JSON.stringify(editorState)
   const blob = new Blob([json], { type: "application/json" })
   const url = URL.createObjectURL(blob)
@@ -45,7 +69,17 @@ document.getElementById("saveState").addEventListener("click", ev => {
   URL.revokeObjectURL(url)
 })
 
-document.getElementById("loadState").addEventListener("change", ev => {
+document.getElementById("openCanvas").addEventListener("click", _ => {
+  const inputFile = document.createElement("input")
+  inputFile.setAttribute("type", "file")
+  inputFile.setAttribute("accept", "application/json")
+  inputFile.value = ""
+  inputFile.click()
+
+  inputFile.addEventListener("change", loadFile)
+})
+
+const loadFile = ev => {
   const file = ev.target.files[0]
   if (!file) return
 
@@ -60,7 +94,7 @@ document.getElementById("loadState").addEventListener("change", ev => {
     drawMap()
   }
   reader.readAsText(file)
-})
+}
 
 // This Function is Get Actual Canvas Size Because There's A DOM to consider and it follow the size of browser
 function getActualCanvasSize() {

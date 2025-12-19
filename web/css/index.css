@@ -49,3 +49,23 @@ body {
   align-items: center;
   gap: 8px;
 }
+
+.topbar {
+  display: flex;
+  border: 2px #aaa solid;
+  flex-direction: row;
+  margin-bottom: 1vh;
+}
+
+.topbar-menu {
+  padding: 1px 4px 1px 4px;
+}
+
+.topbar-menu:hover {
+  cursor: pointer;
+}
+
+.md-button {
+  font-size: 1rem;
+  width: 4vw;
+}

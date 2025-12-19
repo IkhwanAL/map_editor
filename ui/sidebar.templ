@@ -2,7 +2,6 @@ package ui
 
 templ SidebarPage() {
 	<div class="sidebar-area">
-		<span>Tools</span>
 		<div class="sidebar">
 			<button class="tool">Brush</button>
 			<button class="tool">Eraser</button>
@@ -35,13 +34,6 @@ templ SidebarPage() {
 				<input type="range" min="0.5" max="2" id="amplitude" step="0.5" value="1.0" data-key="amplitude"/>
 				<input type="number" id="field" min="0.5" max="2" step="0.5" value="1.0" data-key="amplitude"/>
 			</div>
-		</div>
-		<div id="loadSave">
-			<div class="loadMap">
-				<label>Open Map</label>
-				<input type="file" id="loadState"/>
-			</div>
-			<button id="saveState">Save</button>
 		</div>
 	</div>
 }

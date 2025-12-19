@@ -1,0 +1,19 @@
+package ui
+
+templ NewMapModal() {
+	<div id="newMapOverlay" class="modal-overlay">
+		<div id="newMapModal" class="modal">
+			<div class="modal-header">
+				<span class="close" id="closeModal">&times;</span>
+				<h2 style="color: black;">New Map</h2>
+			</div>
+			<div class="modal-body">
+				<input id="mapWidth" placeholder="Width"/>
+				<input id="mapheight" placeholder="Height"/>
+			</div>
+			<div class="modal-footer">
+				<button id="confirmNew" class="md-button">Create </button>
+			</div>
+		</div>
+	</div>
+}

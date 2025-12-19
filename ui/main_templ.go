@@ -29,7 +29,15 @@ func MainPage() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><script type=\"module\" src=\"js/editor.js\"></script><script type=\"module\" src=\"js/random.js\"></script><script type=\"module\" src=\"js/noise.js\"></script><script type=\"module\" src=\"js/util.js\"></script><script type=\"module\" src=\"js/scale.js\"></script><link rel=\"stylesheet\" href=\"css/index.css\"><link rel=\"stylesheet\" href=\"css/editor.css\"><title>Map Editor</title></head><body><div class=\"page\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><script type=\"module\" src=\"js/editor.js\"></script><script type=\"module\" src=\"js/random.js\"></script><script type=\"module\" src=\"js/noise.js\"></script><script type=\"module\" src=\"js/util.js\"></script><script type=\"module\" src=\"js/scale.js\"></script><link rel=\"stylesheet\" href=\"css/index.css\"><link rel=\"stylesheet\" href=\"css/editor.css\"><link rel=\"stylesheet\" href=\"css/modal.css\"><title>Map Editor</title></head><body>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = TopBar().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"page\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -41,7 +49,11 @@ func MainPage() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div></body></html>")
+		templ_7745c5c3_Err = NewMapModal().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

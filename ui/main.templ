@@ -13,12 +13,15 @@ templ MainPage() {
 			<script type="module" src="js/scale.js"></script>
 			<link rel="stylesheet" href="css/index.css"/>
 			<link rel="stylesheet" href="css/editor.css"/>
+			<link rel="stylesheet" href="css/modal.css"/>
 			<title>Map Editor</title>
 		</head>
 		<body>
+			@TopBar()
 			<div class="page">
 				@SidebarPage()
 				@EditorPage()
+				@NewMapModal()
 			</div>
 		</body>
 	</html>
