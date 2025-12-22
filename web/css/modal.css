@@ -22,13 +22,13 @@
 
 /* Modal Header */
 .modal-header {
-  padding: 2px 16px;
+  padding: 1px 16px;
   color: white;
 }
 
 /* Modal Body */
 .modal-body {
-  padding: 2px 16px;
+  padding: 1px 16px 1rem;
   display: flex;
   flex-direction: column;
 }
@@ -42,7 +42,7 @@
 
 /* Modal Footer */
 .modal-footer {
-  padding: 2px 16px;
+  padding: 1px 16px 1rem;
 }
 
 .close {

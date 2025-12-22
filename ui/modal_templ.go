@@ -29,7 +29,7 @@ func NewMapModal() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"newMapOverlay\" class=\"modal-overlay\"><div id=\"newMapModal\" class=\"modal\"><div class=\"modal-header\"><span class=\"close\" id=\"closeModal\">&times;</span><h2 style=\"color: black;\">New Map</h2></div><div class=\"modal-body\"><input id=\"mapWidth\" placeholder=\"Width\"> <input id=\"mapheight\" placeholder=\"Height\"></div><div class=\"modal-footer\"><button id=\"confirmNew\" class=\"md-button\">Create </button></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div id=\"newMapOverlay\" class=\"modal-overlay\"><div id=\"newMapModal\" class=\"modal\"><div class=\"modal-header\"><span class=\"close\" id=\"closeModal\">&times;</span><h3 style=\"color: black;\">New Map</h3></div><div class=\"modal-body\"><input id=\"mapWidth\" placeholder=\"Width\"> <input id=\"mapHeight\" placeholder=\"Height\"></div><div class=\"modal-footer\"><button id=\"confirmNew\" class=\"confirm-modal-button\">Create </button></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

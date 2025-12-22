@@ -1,7 +1,7 @@
-import { FractalNoise, NewPermutationTable } from "./noise.js"
-import { sfc32 } from "./random.js"
+import { FractalNoise } from "./noise.js"
 import { debounce, clamp } from "./util.js"
 import { bilinearInterpolation } from "./scale.js"
+import { newState } from "./state.js"
 
 /**
  * @type {HTMLCanvasElement}
@@ -11,47 +11,55 @@ const ctx = canvas.getContext("2d")
 
 const editor = document.getElementById("editor")
 
-let editorState = {
-  version: 1,
-  seed1: null,
-  seed2: null,
-  seed3: null,
-  seed4: null,
-  width: 500,
-  height: 500,
-  tileSize: 1,
-  map: [],
-  permutationTable: [],
-  imageData: null,
-  generator: {
-    octaves: null,
-    persistence: null,
-    lacunarity: null,
-    frequency: null,
-    amplitude: null
-  },
-  dirty: false
-}
+let editorState = newState(500, 500, ctx)
 
-const overlay = document.getElementById("newMapOverlay")
-// const modal = document.getElementById("newMapModal")
+const overlayNewMap = document.getElementById("newMapOverlay")
+document.getElementById("confirmNew").addEventListener("click", _ => {
+  const width = parseInt(document.getElementById("mapWidth").value, 10)
+  const height = parseInt(document.getElementById("mapHeight").value, 10)
+
+  if (isNaN(width)) {
+    alert("Width Input Empty")
+    return
+  }
+
+  if (isNaN(height)) {
+    alert("Height Input Empty")
+    return
+  }
+
+  if (editorState.dirty == true) {
+    const ok = confirm("Discard current map?")
+    if (!ok) return
+    ctx.clearRect(0, 0, editorState.width, editorState.height)
+  }
+
+  editorState = newState(width, height, ctx)
+
+  alert("Success")
+
+  document.getElementById("mapWidth").value = ""
+  document.getElementById("mapHeight").value = ""
+
+  overlayNewMap.style.display = "none"
+})
+
 
 document.getElementById("newCanvas").addEventListener("click", _ => {
-  overlay.style.display = "block"
+  overlayNewMap.style.display = "block"
 })
 
 document.getElementById("closeModal").addEventListener("click", _ => {
-  overlay.style.display = "none"
+  overlayNewMap.style.display = "none"
 })
 
 document.querySelector(".modal").childNodes.forEach(node => {
   node.addEventListener("click", ev => ev.stopPropagation())
 })
 
-overlay.addEventListener("click", ev => {
-  if (ev.target === overlay) {
-    console.log("Outside Modal")
-    overlay.style.display = "none"
+overlayNewMap.addEventListener("click", ev => {
+  if (ev.target === overlayNewMap) {
+    overlayNewMap.style.display = "none"
   }
 })
 
@@ -65,6 +73,8 @@ document.getElementById("saveCanvas").addEventListener("click", _ => {
   a.href = url
   a.download = "test.json"
   a.click()
+
+  editorState.dirty = false
 
   URL.revokeObjectURL(url)
 })
@@ -117,6 +127,8 @@ getActualCanvasSize()
 function drawMap() {
   const { map, width, height } = editorState
 
+  editorState.dirty = true
+
   const scaledMap = bilinearInterpolation(map, width, height)
   let index = 0
   for (let y = 0; y < scaledMap.length; y++) {
@@ -168,23 +180,6 @@ inputGenerator.forEach(input => {
   input.addEventListener("input", inputControl)
 })
 
-function setupGenerator() {
-  const genSeed = () => (Math.random() * 2 ** 32) >> 0
-
-  editorState.seed1 = genSeed()
-  editorState.seed2 = genSeed()
-  editorState.seed3 = genSeed()
-  editorState.seed4 = genSeed()
-
-  const rand = sfc32(editorState.seed1, editorState.seed2, editorState.seed3, editorState.seed4)
-
-  const perm = NewPermutationTable(rand)
-
-  editorState.permutationTable = perm
-}
-
-setupGenerator()
-
 function mapGenerator(option) {
   const { permutationTable, width, height } = editorState
 
@@ -196,7 +191,6 @@ function mapGenerator(option) {
   const sampleHeight = Math.floor(height / 3)
   const sampleWidth = Math.floor(width / 3)
 
-  console.log(option)
   for (let y = 0; y < sampleHeight; y++) {
     noises[y] = []
     for (let x = 0; x < sampleWidth; x++) {

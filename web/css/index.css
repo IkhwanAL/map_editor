@@ -65,7 +65,7 @@ body {
   cursor: pointer;
 }
 
-.md-button {
+.confirm-modal-button {
   font-size: 1rem;
-  width: 4vw;
+  width: 100%;
 }
