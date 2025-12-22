@@ -9,7 +9,6 @@ const defaultState = {
   seed4: null,
   width: 0,
   height: 0,
-  tileSize: 5,
   map: [],
   permutationTable: [],
   imageData: null,
@@ -21,6 +20,8 @@ const defaultState = {
     amplitude: null
   },
   dirty: false,
+  lastMouseX: 0,
+  lastMouseY: 0
 }
 
 /**
@@ -35,7 +36,9 @@ export function newState(width, height, ctx) {
 
   const imageData = ctx.createImageData(width, height)
 
-  return { ...defaultState, width, height, permutationTable: perm, seed1, seed2, seed3, seed4, imageData }
+  let state = structuredClone(defaultState)
+
+  return { ...state, width, height, permutationTable: perm, seed1, seed2, seed3, seed4, imageData }
 }
 
 export function setupGenerator() {

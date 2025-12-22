@@ -11,7 +11,8 @@ const ctx = canvas.getContext("2d")
 
 const editor = document.getElementById("editor")
 
-let editorState = newState(500, 500, ctx)
+
+let canvasState = newState(100, 100, ctx)
 
 const overlayNewMap = document.getElementById("newMapOverlay")
 document.getElementById("confirmNew").addEventListener("click", _ => {
@@ -28,13 +29,13 @@ document.getElementById("confirmNew").addEventListener("click", _ => {
     return
   }
 
-  if (editorState.dirty == true) {
+  if (canvasState.dirty == true) {
     const ok = confirm("Discard current map?")
     if (!ok) return
-    ctx.clearRect(0, 0, editorState.width, editorState.height)
+    ctx.clearRect(0, 0, canvasState.width, canvasState.height)
   }
 
-  editorState = newState(width, height, ctx)
+  canvasState = newState(width, height, ctx)
 
   alert("Success")
 
@@ -65,7 +66,7 @@ overlayNewMap.addEventListener("click", ev => {
 
 // Need To Change In the Future
 document.getElementById("saveCanvas").addEventListener("click", _ => {
-  const json = JSON.stringify(editorState)
+  const json = JSON.stringify(canvasState)
   const blob = new Blob([json], { type: "application/json" })
   const url = URL.createObjectURL(blob)
 
@@ -74,7 +75,7 @@ document.getElementById("saveCanvas").addEventListener("click", _ => {
   a.download = "test.json"
   a.click()
 
-  editorState.dirty = false
+  canvasState.dirty = false
 
   URL.revokeObjectURL(url)
 })
@@ -97,10 +98,10 @@ const loadFile = ev => {
   reader.onload = e => {
     const state = JSON.parse(e.target.result)
 
-    editorState = state
-    editorState.imageData = ctx.createImageData(state.width, state.height)
+    canvasState = state
+    canvasState.imageData = ctx.createImageData(state.width, state.height)
 
-    mapGenerator(editorState.generator)
+    mapGenerator(canvasState.generator)
     drawMap()
   }
   reader.readAsText(file)
@@ -110,24 +111,26 @@ const loadFile = ev => {
 function getActualCanvasSize() {
   const editorRect = editor.getBoundingClientRect()
 
-  editorState.width = Math.ceil(editorRect.width)
-  editorState.height = Math.ceil(editorRect.height)
+  canvasState.width = Math.ceil(editorRect.width)
+  canvasState.height = Math.ceil(editorRect.height)
 
-  canvas.width = editorState.width
-  canvas.height = editorState.height
+  canvas.width = canvasState.width
+  canvas.height = canvasState.height
 
-  editorState.imageData = ctx.createImageData(editorState.width, editorState.height)
+  canvasState.imageData = ctx.createImageData(canvasState.width, canvasState.height)
 
   ctx.fillStyle = "#FFF"
-  ctx.fillRect(0, 0, editorState.width, editorState.height)
+  ctx.fillRect(0, 0, canvasState.width, canvasState.height)
 }
 
 getActualCanvasSize()
 
-function drawMap() {
-  const { map, width, height } = editorState
+let offscreen
 
-  editorState.dirty = true
+function drawMap() {
+  const { map, width, height } = canvasState
+
+  canvasState.dirty = true
 
   const scaledMap = bilinearInterpolation(map, width, height)
   let index = 0
@@ -135,18 +138,22 @@ function drawMap() {
     for (let x = 0; x < scaledMap[y].length; x++) {
       const grid = scaledMap[y][x]
       const n = clamp(grid * 255 | 0, 0, 255)
-      editorState.imageData.data[index++] = n
-      editorState.imageData.data[index++] = n
-      editorState.imageData.data[index++] = n
-      editorState.imageData.data[index++] = 255
+      canvasState.imageData.data[index++] = n
+      canvasState.imageData.data[index++] = n
+      canvasState.imageData.data[index++] = n
+      canvasState.imageData.data[index++] = 255
     }
   }
 
-  ctx.putImageData(editorState.imageData, 0, 0)
+  ctx.putImageData(canvasState.imageData, 0, 0)
+
+  offscreen = new OffscreenCanvas(width, height);
+  const offcvs = offscreen.getContext("2d")
+  offcvs.putImageData(canvasState.imageData, 0, 0)
 }
 
 generateMap.addEventListener("click", () => {
-  let { generator } = editorState
+  let { generator } = canvasState
   document.querySelectorAll(".generator .form-input input[type=range]").forEach(input => {
     const key = input.dataset.key
     const value = parseFloat(input.value)
@@ -169,7 +176,7 @@ const inputControl = debounce(ev => {
     if (el !== source) el.value = value
   })
 
-  let { generator } = editorState
+  let { generator } = canvasState
 
   generator[key] = value
   mapGenerator(generator)
@@ -181,7 +188,7 @@ inputGenerator.forEach(input => {
 })
 
 function mapGenerator(option) {
-  const { permutationTable, width, height } = editorState
+  const { permutationTable, width, height } = canvasState
 
   let noises = []
 
@@ -208,7 +215,7 @@ function mapGenerator(option) {
     }
   }
 
-  editorState.map = normalizeNoise(noises, min, max)
+  canvasState.map = normalizeNoise(noises, min, max)
 }
 
 /**
@@ -225,4 +232,53 @@ function normalizeNoise(noises, min, max) {
   }
 
   return noises
+}
+
+let editorState = {
+  isDragging: false,
+  offsetX: 0,
+  offsetY: 0
+}
+
+canvas.addEventListener("mouseup", () => editorState.isDragging = false)
+canvas.addEventListener("mouseleave", () => editorState.isDragging = false)
+
+canvas.addEventListener("mousedown", (ev) => {
+  editorState.isDragging = true
+  canvasState.lastMouseX = ev.clientX
+  canvasState.lastMouseY = ev.clientY
+})
+
+canvas.addEventListener("mousemove", (ev) => {
+  if (!editorState.isDragging) return
+
+  const deltaX = ev.clientX - canvasState.lastMouseX
+  const deltaY = ev.clientY - canvasState.lastMouseY
+
+  editorState.offsetX += deltaX
+  editorState.offsetY += deltaY
+
+  scheduleDraw()
+
+  canvasState.lastMouseX = ev.clientX
+  canvasState.lastMouseY = ev.clientY
+})
+
+function draw(_) {
+
+  ctx.clearRect(0, 0, canvasState.width, canvasState.height)
+
+  ctx.drawImage(offscreen, canvasState.offsetX, canvasState.offsetY)
+}
+
+let needsRedraw = false
+
+function scheduleDraw() {
+  if (!needsRedraw) {
+    needsRedraw = true
+    requestAnimationFrame((timestamp) => {
+      draw(timestamp)
+      needsRedraw = false
+    })
+  }
 }
