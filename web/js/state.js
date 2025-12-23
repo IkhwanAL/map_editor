@@ -1,5 +1,14 @@
 import { sfc32 } from "./random.js"
 import { NewPermutationTable } from "./noise.js"
+/**
+ * @type {HTMLCanvasElement}
+ */
+export const canvas = document.getElementById("canvas")
+
+/**
+ * @type {HTMLCanvasElement}
+ */
+export const overlay = document.getElementById("overlay")
 
 const defaultState = {
   version: 1,
@@ -20,25 +29,41 @@ const defaultState = {
   },
   dirty: false,
   lastMouseX: 0,
-  lastMouseY: 0
+  lastMouseY: 0,
+  chunkOrder: [],
+  chunkAccess: {}
 }
 
-/**
- * @param {number} width
- * @param {number} height
- * @param {CanvasRenderingContext2D} ctx
- *
- */
-export function newState(width, height) {
+// This is A State Of Mouse Or Editor To Keep Track What's Going On
+// We Wont Store This Or Export This
+export let editorState = {
+  isDragging: false,
+  // Canvas Viewport in x0 and y0
+  camera: {
+    x: 0,
+    y: 0
+  },
+  state: "dragging",
+  // Mouse Position
+  x0: 0,
+  y0: 0,
+  x1: 0,
+  y1: 0,
+}
+
+
+export function newState() {
 
   const { perm, seed1, seed2, seed3, seed4 } = setupGenerator()
 
   let state = structuredClone(defaultState)
 
-  return { ...state, width, height, permutationTable: perm, seed1, seed2, seed3, seed4 }
+  const chunk = new Map()
+
+  return { ...state, permutationTable: perm, seed1, seed2, seed3, seed4, chunkAccess: chunk }
 }
 
-export let canvasState = newState(100, 100)
+export let canvasState = newState()
 
 export function setupGenerator() {
   const genSeed = () => (Math.random() * 2 ** 32) >> 0
@@ -64,3 +89,4 @@ export function setupGenerator() {
 export function setCanvasState(state) {
   canvasState = state
 }
+

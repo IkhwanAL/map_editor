@@ -37,7 +37,40 @@ func SidebarPage() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = LayerBar().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func LayerBar() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var2 == nil {
+			templ_7745c5c3_Var2 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div><h3>Layer</h3></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -61,12 +94,12 @@ func Generator() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var2 == nil {
-			templ_7745c5c3_Var2 = templ.NopComponent
+		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var3 == nil {
+			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"generator\"><button id=\"generateMap\">Generate Map</button><!-- <div class=\"generate-input\" id=\"generateInput\"> --><!-- \t<input placeholder=\"Width\" id=\"inputField\" type=\"number\" data-key=\"width\"/> --><!-- \t<input placeholder=\"Height\" id=\"inputField\" type=\"number\" data-key=\"height\"/> --><!-- </div> --><div class=\"form-input\"><label>Octaves</label> <input type=\"range\" min=\"1\" max=\"10\" step=\"1\" value=\"4\" data-key=\"octaves\"> <input type=\"number\" id=\"field\" min=\"1\" max=\"10\" step=\"1\" value=\"4\" data-key=\"octaves\"></div><div class=\"form-input\"><label>Persistence</label> <input type=\"range\" min=\"0.1\" max=\"1\" id=\"persistence\" step=\"0.05\" value=\"0.5\" data-key=\"persistence\"> <input type=\"number\" id=\"field\" min=\"1\" max=\"3\" step=\"0.05\" value=\"0.5\" data-key=\"persistence\"></div><div class=\"form-input\"><label>Lacunarity</label> <input type=\"range\" min=\"1\" max=\"3\" id=\"lacunarity\" step=\"0.1\" value=\"2.0\" data-key=\"lacunarity\"> <input type=\"number\" id=\"field\" min=\"1\" max=\"3\" step=\"0.1\" value=\"2.0\" data-key=\"lacunarity\"></div><div class=\"form-input\"><label>Frequency</label> <input type=\"range\" min=\"0.005\" max=\"0.2\" id=\"frequency\" step=\"0.005\" value=\"0.01\" data-key=\"frequency\"> <input type=\"number\" id=\"field\" min=\"0.005\" max=\"0.2\" step=\"0.005\" value=\"0.01\" data-key=\"frequency\"></div><div class=\"form-input\"><label>Amplitude</label> <input type=\"range\" min=\"0.5\" max=\"2\" id=\"amplitude\" step=\"0.5\" value=\"1.0\" data-key=\"amplitude\"> <input type=\"number\" id=\"field\" min=\"0.5\" max=\"2\" step=\"0.5\" value=\"1.0\" data-key=\"amplitude\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"generator\"><button id=\"generateMap\">Generate Map</button><div class=\"form-input\"><label>Octaves</label> <input type=\"range\" min=\"1\" max=\"10\" step=\"1\" value=\"4\" data-key=\"octaves\"> <input type=\"number\" id=\"field\" min=\"1\" max=\"10\" step=\"1\" value=\"4\" data-key=\"octaves\"></div><div class=\"form-input\"><label>Persistence</label> <input type=\"range\" min=\"0.1\" max=\"1\" id=\"persistence\" step=\"0.05\" value=\"0.5\" data-key=\"persistence\"> <input type=\"number\" id=\"field\" min=\"1\" max=\"3\" step=\"0.05\" value=\"0.5\" data-key=\"persistence\"></div><div class=\"form-input\"><label>Lacunarity</label> <input type=\"range\" min=\"1\" max=\"3\" id=\"lacunarity\" step=\"0.1\" value=\"2.0\" data-key=\"lacunarity\"> <input type=\"number\" id=\"field\" min=\"1\" max=\"3\" step=\"0.1\" value=\"2.0\" data-key=\"lacunarity\"></div><div class=\"form-input\"><label>Frequency</label> <input type=\"range\" min=\"0.005\" max=\"0.2\" id=\"frequency\" step=\"0.005\" value=\"0.01\" data-key=\"frequency\"> <input type=\"number\" id=\"field\" min=\"0.005\" max=\"0.2\" step=\"0.005\" value=\"0.01\" data-key=\"frequency\"></div><div class=\"form-input\"><label>Amplitude</label> <input type=\"range\" min=\"0.5\" max=\"2\" id=\"amplitude\" step=\"0.5\" value=\"1.0\" data-key=\"amplitude\"> <input type=\"number\" id=\"field\" min=\"0.5\" max=\"2\" step=\"0.5\" value=\"1.0\" data-key=\"amplitude\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -1,4 +1,4 @@
-import { canvasState, setCanvasState } from "./state.js"
+import { canvasState, newState, setCanvasState } from "./state.js"
 import { mapGenerator, drawMap } from "./canvas.js"
 
 const overlayNewMap = document.getElementById("newMapOverlay")
@@ -9,7 +9,7 @@ document.getElementById("confirmNew").addEventListener("click", _ => {
     ctx.clearRect(0, 0, canvasState.width, canvasState.height)
   }
 
-  canvasState = newState(100, 100, ctx)
+  setCanvasState(newState())
 
   alert("Success")
 

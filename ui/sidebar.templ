@@ -10,16 +10,19 @@ templ SidebarPage() {
 			<button class="tool" id="press-drag">Press & Drag</button>
 		</div>
 		@Generator()
+		@LayerBar()
+	</div>
+}
+
+templ LayerBar() {
+	<div>
+		<h3>Layer</h3>
 	</div>
 }
 
 templ Generator() {
 	<div class="generator">
 		<button id="generateMap">Generate Map</button>
-		<!-- <div class="generate-input" id="generateInput"> -->
-		<!-- 	<input placeholder="Width" id="inputField" type="number" data-key="width"/> -->
-		<!-- 	<input placeholder="Height" id="inputField" type="number" data-key="height"/> -->
-		<!-- </div> -->
 		<div class="form-input">
 			<label>Octaves</label>
 			<input type="range" min="1" max="10" step="1" value="4" data-key="octaves"/>

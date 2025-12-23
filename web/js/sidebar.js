@@ -1,6 +1,19 @@
 import { mapGenerator, drawMap } from "./canvas.js"
 import { debounce } from "./util.js"
-import { canvasState } from "./state.js"
+import { canvasState, editorState } from "./state.js"
+
+document.getElementById("press-drag").addEventListener("click", _ => {
+  const button = document.getElementById("press-drag")
+  if (editorState.state == "dragging") {
+    editorState.state = "press-drag"
+    button.style.border = "1px solid blue"
+    return
+  }
+
+  // return old state
+  editorState.state = "dragging"
+  button.style.border = "none"
+})
 
 document.getElementById("generateMap").addEventListener("click", () => {
   let { generator } = canvasState
@@ -17,6 +30,7 @@ document.getElementById("generateMap").addEventListener("click", () => {
 const inputGenerator = document.querySelectorAll(".generator .form-input input")
 
 const inputControl = debounce(ev => {
+
   const source = ev.target
   const wrapper = source.closest(".form-input")
   const value = parseFloat(source.value)

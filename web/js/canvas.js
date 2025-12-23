@@ -1,24 +1,21 @@
-import { canvasState } from "./state.js"
+import { canvasState, editorState, canvas, overlay } from "./state.js"
 import { FractalNoise } from "./noise.js"
 import { clamp } from "./util.js"
 import { bilinearInterpolation } from "./scale.js"
 
-let offscreen
-
-/**
- * @type {HTMLCanvasElement}
- */
-const canvas = document.getElementById("canvas")
 const ctx = canvas.getContext("2d")
+const overlayCtx = overlay.getContext("2d")
 
 function getActualCanvasSize() {
   const editorRect = editor.getBoundingClientRect()
-
   canvasState.width = Math.ceil(editorRect.width)
   canvasState.height = Math.ceil(editorRect.height)
 
   canvas.width = canvasState.width
   canvas.height = canvasState.height
+
+  overlay.width = canvasState.width
+  overlay.height = canvasState.height
 
   ctx.fillStyle = "#FFF"
   ctx.fillRect(0, 0, canvasState.width, canvasState.height)
@@ -27,7 +24,14 @@ function getActualCanvasSize() {
 getActualCanvasSize()
 
 export function drawMap() {
-  const { map, width, height } = canvasState
+  if (editorState.state != "press-drag") {
+    return
+  }
+
+  const { map } = canvasState
+
+  const width = Math.abs(editorState.x1 - editorState.x0)
+  const height = Math.abs(editorState.y1 - editorState.y0)
 
   canvasState.dirty = true
 
@@ -46,23 +50,40 @@ export function drawMap() {
     }
   }
 
-  ctx.putImageData(imageData, 0, 0)
+  ctx.putImageData(imageData, editorState.x0 - editorState.camera.x, editorState.y0 - editorState.camera.y)
 
-  offscreen = new OffscreenCanvas(width, height);
+  const offscreen = new OffscreenCanvas(width, height)
+
   const offcvs = offscreen.getContext("2d")
   offcvs.putImageData(imageData, 0, 0)
+
+  const chunk = {
+    x: editorState.x0,
+    y: editorState.y0,
+    width, height,
+    offscreen,
+    imageData
+  }
+
+  canvasState.chunkOrder.push(chunk)
+  canvasState.chunkAccess.set(`${editorState.x0},${editorState.y0}`, chunk)
 }
 
 export function mapGenerator(option) {
-  const { permutationTable, width, height } = canvasState
+  if (editorState.state != "press-drag") return
+
+  const width = Math.abs(editorState.x1 - editorState.x0)
+  const height = Math.abs(editorState.y1 - editorState.y0)
+
+  const { permutationTable } = canvasState
 
   let noises = []
 
   let max = -Infinity
   let min = Infinity
 
-  const sampleHeight = Math.floor(height / 3)
-  const sampleWidth = Math.floor(width / 3)
+  const sampleHeight = Math.floor(height / 2)
+  const sampleWidth = Math.floor(width / 2)
 
   for (let y = 0; y < sampleHeight; y++) {
     noises[y] = []
@@ -99,22 +120,50 @@ function normalizeNoise(noises, min, max) {
   return noises
 }
 
-function draw(_) {
+function drawWorld() {
   ctx.clearRect(0, 0, canvasState.width, canvasState.height)
 
-  ctx.drawImage(offscreen, canvasState.offsetX, canvasState.offsetY)
-}
+  for (let i = 0; i < canvasState.chunkOrder.length; i++) {
+    const chunk = canvasState.chunkOrder[i];
 
-let needsRedraw = false
+    const screenX = chunk.x - editorState.camera.x
+    const screenY = chunk.y - editorState.camera.y
 
-function scheduleDraw() {
-  if (!needsRedraw) {
-    needsRedraw = true
-    requestAnimationFrame((timestamp) => {
-      draw(timestamp)
-      needsRedraw = false
-    })
+    ctx.drawImage(chunk.offscreen, screenX, screenY)
   }
 }
 
-window.addEventListener("request-redraw", scheduleDraw)
+function drawOverlay() {
+  overlayCtx.clearRect(0, 0, canvasState.width, canvasState.height)
+  if (editorState.isDragging && editorState.state == "press-drag") {
+    const x0 = editorState.x0 - editorState.camera.x
+    const y0 = editorState.y0 - editorState.camera.y
+
+    const x1 = editorState.x1 - editorState.camera.x
+    const y1 = editorState.y1 - editorState.camera.y
+
+    overlayCtx.strokeRect(x0, y0, x1 - x0, y1 - y0)
+  }
+}
+
+let redrawWorld = false
+let redrawOverlay = false
+let needsRedraw = false
+
+export function requestRedraw({ world = false, overlay = false } = {}) {
+  redrawWorld ||= world
+  redrawOverlay ||= overlay
+
+  if (!needsRedraw) {
+    needsRedraw = true
+    requestAnimationFrame(frame)
+  }
+}
+function frame() {
+  if (redrawWorld) drawWorld()
+  if (redrawOverlay) drawOverlay()
+
+  redrawWorld = false
+  redrawOverlay = false
+  needsRedraw = false
+}
