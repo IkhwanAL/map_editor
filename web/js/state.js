@@ -11,7 +11,6 @@ const defaultState = {
   height: 0,
   map: [],
   permutationTable: [],
-  imageData: null,
   generator: {
     octaves: null,
     persistence: null,
@@ -30,16 +29,16 @@ const defaultState = {
  * @param {CanvasRenderingContext2D} ctx
  *
  */
-export function newState(width, height, ctx) {
+export function newState(width, height) {
 
   const { perm, seed1, seed2, seed3, seed4 } = setupGenerator()
 
-  const imageData = ctx.createImageData(width, height)
-
   let state = structuredClone(defaultState)
 
-  return { ...state, width, height, permutationTable: perm, seed1, seed2, seed3, seed4, imageData }
+  return { ...state, width, height, permutationTable: perm, seed1, seed2, seed3, seed4 }
 }
+
+export let canvasState = newState(100, 100)
 
 export function setupGenerator() {
   const genSeed = () => (Math.random() * 2 ** 32) >> 0
@@ -62,3 +61,6 @@ export function setupGenerator() {
   }
 }
 
+export function setCanvasState(state) {
+  canvasState = state
+}
