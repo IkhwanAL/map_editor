@@ -1,5 +1,7 @@
-import { canvasState, newState, setCanvasState } from "./state.js"
-import { mapGenerator, drawMap } from "./canvas.js"
+import { canvasState, freshNewState, newState, setCanvasState } from "./state.js"
+import { mapGenerator, drawMap, drawCanvasFromLoadedState } from "./canvas.js"
+import { convertStateToSavedJson } from "./convert.js"
+
 
 const overlayNewMap = document.getElementById("newMapOverlay")
 document.getElementById("confirmNew").addEventListener("click", _ => {
@@ -39,13 +41,15 @@ overlayNewMap.addEventListener("click", ev => {
 
 // Need To Change In the Future
 document.getElementById("saveCanvas").addEventListener("click", _ => {
-  const json = JSON.stringify(canvasState)
+  const state = convertStateToSavedJson(canvasState)
+  console.log("After Convert", state)
+  const json = JSON.stringify(state)
   const blob = new Blob([json], { type: "application/json" })
   const url = URL.createObjectURL(blob)
 
   const a = document.createElement("a")
   a.href = url
-  a.download = "test.json"
+  a.download = "test.json" // Name Something Better or Open a File Choser
   a.click()
 
   canvasState.dirty = false
@@ -71,10 +75,21 @@ const loadFile = ev => {
   reader.onload = e => {
     const state = JSON.parse(e.target.result)
 
-    setCanvasState(state)
+    loadState(state)
 
-    mapGenerator(canvasState.generator)
-    drawMap()
   }
   reader.readAsText(file)
+}
+
+function loadState(state) {
+  if (canvasState.dirty == true) {
+    const ok = confirm("Discard current map?")
+    if (!ok) return
+  }
+
+  let newState = freshNewState()
+  newState = { ...newState, ...state }
+
+  newState = drawCanvasFromLoadedState(newState)
+  setCanvasState(newState)
 }

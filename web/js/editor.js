@@ -10,8 +10,8 @@ canvas.addEventListener("mousedown", (ev) => {
   editorState.isDragging = true
   canvasState.lastMouseX = ev.clientX
   canvasState.lastMouseY = ev.clientY
-  editorState.x0 = (ev.clientX - canvasPosition.left) + editorState.camera.x
-  editorState.y0 = (ev.clientY - canvasPosition.top) + editorState.camera.y
+  editorState.x0 = (ev.clientX - canvasPosition.left) + canvasState.editorState.camera.x
+  editorState.y0 = (ev.clientY - canvasPosition.top) + canvasState.editorState.camera.y
 })
 
 canvas.addEventListener("mousemove", (ev) => {
@@ -19,25 +19,23 @@ canvas.addEventListener("mousemove", (ev) => {
 
   const canvasPosition = canvas.getBoundingClientRect()
   if (editorState.state == "press-drag") {
-    editorState.x1 = (ev.clientX - canvasPosition.left) + editorState.camera.x
-    editorState.y1 = (ev.clientY - canvasPosition.top) + editorState.camera.y
+    editorState.x1 = (ev.clientX - canvasPosition.left) + canvasState.editorState.camera.x
+    editorState.y1 = (ev.clientY - canvasPosition.top) + canvasState.editorState.camera.y
 
     requestRedraw({ overlay: true })
     return
   }
 
-  console.log("1", canvasState.chunkOrder)
   const deltaX = ev.clientX - canvasState.lastMouseX
   const deltaY = ev.clientY - canvasState.lastMouseY
 
-  editorState.camera.x -= deltaX
-  editorState.camera.y -= deltaY
+  canvasState.editorState.camera.x -= deltaX
+  canvasState.editorState.camera.y -= deltaY
 
   requestRedraw({ overlay: true, world: true })
 
   canvasState.lastMouseX = ev.clientX
   canvasState.lastMouseY = ev.clientY
 
-  console.log("2", canvasState.chunkOrder)
 })
 

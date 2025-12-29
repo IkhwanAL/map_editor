@@ -50,7 +50,19 @@ export function drawMap() {
     }
   }
 
-  ctx.putImageData(imageData, editorState.x0 - editorState.camera.x, editorState.y0 - editorState.camera.y)
+  let x = editorState.x0
+  let y = editorState.y0
+
+  // in case use mouse move to left side instead of right side
+  if (editorState.x1 < editorState.x0) {
+    x = editorState.x1
+  }
+
+  if (editorState.y1 < editorState.y0) {
+    y = editorState.y1
+  }
+
+  ctx.putImageData(imageData, x - canvasState.editorState.camera.x, y - canvasState.editorState.camera.y)
 
   const offscreen = new OffscreenCanvas(width, height)
 
@@ -58,14 +70,14 @@ export function drawMap() {
   offcvs.putImageData(imageData, 0, 0)
 
   const chunk = {
-    x: editorState.x0,
-    y: editorState.y0,
+    x: x,
+    y: y,
     width, height,
     offscreen,
     imageData
   }
 
-  canvasState.chunkOrder.push(chunk)
+  canvasState.chunkOrders.push(chunk)
   canvasState.chunkAccess.set(`${editorState.x0},${editorState.y0}`, chunk)
 }
 
@@ -123,11 +135,11 @@ function normalizeNoise(noises, min, max) {
 function drawWorld() {
   ctx.clearRect(0, 0, canvasState.width, canvasState.height)
 
-  for (let i = 0; i < canvasState.chunkOrder.length; i++) {
-    const chunk = canvasState.chunkOrder[i];
+  for (let i = 0; i < canvasState.chunkOrders.length; i++) {
+    const chunk = canvasState.chunkOrders[i];
 
-    const screenX = chunk.x - editorState.camera.x
-    const screenY = chunk.y - editorState.camera.y
+    const screenX = chunk.x - canvasState.editorState.camera.x
+    const screenY = chunk.y - canvasState.editorState.camera.y
 
     ctx.drawImage(chunk.offscreen, screenX, screenY)
   }
@@ -136,11 +148,11 @@ function drawWorld() {
 function drawOverlay() {
   overlayCtx.clearRect(0, 0, canvasState.width, canvasState.height)
   if (editorState.isDragging && editorState.state == "press-drag") {
-    const x0 = editorState.x0 - editorState.camera.x
-    const y0 = editorState.y0 - editorState.camera.y
+    const x0 = editorState.x0 - canvasState.editorState.camera.x
+    const y0 = editorState.y0 - canvasState.editorState.camera.y
 
-    const x1 = editorState.x1 - editorState.camera.x
-    const y1 = editorState.y1 - editorState.camera.y
+    const x1 = editorState.x1 - canvasState.editorState.camera.x
+    const y1 = editorState.y1 - canvasState.editorState.camera.y
 
     overlayCtx.strokeRect(x0, y0, x1 - x0, y1 - y0)
   }
@@ -166,4 +178,32 @@ function frame() {
   redrawWorld = false
   redrawOverlay = false
   needsRedraw = false
+}
+
+export function drawCanvasFromLoadedState(state) {
+  const newChunkState = []
+
+  for (let i = 0; i < state.chunkOrders.length; i++) {
+    const chunk = state.chunkOrders[i];
+
+    const imageData = ctx.createImageData(chunk.width, chunk.height)
+
+    imageData.data.set(new Uint8ClampedArray(chunk.imageData))
+
+    ctx.putImageData(imageData, chunk.x - state.editorState.camera.x, chunk.y - state.editorState.camera.y)
+
+    const offscreen = new OffscreenCanvas(chunk.width, chunk.height)
+
+    const offContext = offscreen.getContext("2d")
+
+    offContext.putImageData(imageData, 0, 0)
+
+    const newChunk = { ...chunk, imageData: imageData, offscreen: offscreen }
+    newChunkState.push(newChunk)
+    state.chunkAccess.set(`${chunk.x},${chunk.y}`, newChunk)
+  }
+
+  state.chunkOrders = newChunkState
+
+  return state
 }

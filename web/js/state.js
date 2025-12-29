@@ -30,27 +30,33 @@ const defaultState = {
   dirty: false,
   lastMouseX: 0,
   lastMouseY: 0,
-  chunkOrder: [],
-  chunkAccess: {}
+  chunkOrders: [],
+  chunkAccess: {},
+  editorState: {
+    camera: {
+      x: 0,
+      y: 0,
+    }
+  }
 }
 
 // This is A State Of Mouse Or Editor To Keep Track What's Going On
 // We Wont Store This Or Export This
 export let editorState = {
   isDragging: false,
-  // Canvas Viewport in x0 and y0
-  camera: {
-    x: 0,
-    y: 0
-  },
   state: "dragging",
   // Mouse Position
-  x0: 0,
+  x0: 0, // Need To Validate Does This Need to be Store in Canvas State
   y0: 0,
   x1: 0,
   y1: 0,
 }
 
+export function freshNewState() {
+  const chunk = new Map()
+  const state = structuredClone(defaultState)
+  return { ...state, chunkAccess: chunk }
+}
 
 export function newState() {
 
