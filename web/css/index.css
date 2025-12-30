@@ -11,66 +11,29 @@ body {
 .page {
   display: flex;
   height: 100vh;
-
-}
-
-.sidebar-area {
-  flex: 0 0 250px;
-  margin-right: 4px;
-}
-
-.sidebar {
-  display: grid;
-  grid-template-columns: auto auto;
-  grid-auto-rows: min-content;
-}
-
-.tool {
-  background-color: #f1f1f1;
-  color: #000;
-  margin: 4px;
-  font-size: 20px;
-  text-align: center;
-}
-
-.generator {
-  width: max-content;
-  display: flex;
   flex-direction: column;
-  gap: 8px;
+  overflow: hidden;
 }
 
-.form-input input[type="range"] {
+.content {
+  display: flex;
   flex: 1;
+  overflow: hidden;
 }
 
-.form-input {
+.main {
+  flex: 1;
+  overflow: auto;
   display: flex;
-  flex-direction: row;
+  justify-content: center;
   align-items: center;
-  gap: 8px;
 }
 
-.topbar {
-  display: flex;
-  border: 2px #aaa solid;
-  flex-direction: row;
-  margin-bottom: 1vh;
-}
-
-.topbar-menu {
-  padding: 1px 4px 1px 4px;
-}
-
-.topbar-menu:hover {
-  cursor: pointer;
+canvas {
+  border: 1px solid black;
 }
 
 .confirm-modal-button {
   font-size: 1rem;
   width: 100%;
-}
-
-canvas {
-  border: 1px solid black;
 }
