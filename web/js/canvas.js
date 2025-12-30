@@ -2,6 +2,7 @@ import { canvasState, editorState, canvas, overlay } from "./state.js"
 import { FractalNoise } from "./noise.js"
 import { clamp } from "./util.js"
 import { bilinearInterpolation } from "./scale.js"
+import { MouseEditorState } from "./state_option.js"
 
 const ctx = canvas.getContext("2d")
 const overlayCtx = overlay.getContext("2d")
@@ -24,7 +25,7 @@ function getActualCanvasSize() {
 getActualCanvasSize()
 
 export function drawMap() {
-  if (editorState.state != "press-drag") {
+  if (editorState.state != MouseEditorState.SelectDrag) {
     return
   }
 
@@ -82,7 +83,7 @@ export function drawMap() {
 }
 
 export function mapGenerator(option) {
-  if (editorState.state != "press-drag") return
+  if (editorState.state != MouseEditorState.SelectDrag) return
 
   const width = Math.abs(editorState.x1 - editorState.x0)
   const height = Math.abs(editorState.y1 - editorState.y0)
@@ -133,27 +134,40 @@ function normalizeNoise(noises, min, max) {
 }
 
 function drawWorld() {
+  ctx.setTransform(1, 0, 0, 1, 0, 0)
   ctx.clearRect(0, 0, canvasState.width, canvasState.height)
+
+  const cam = canvasState.editorState.camera
+  const zoom = canvasState.editorState.zoom
+
+  ctx.translate(cam.x * zoom, cam.y * zoom)
+  ctx.scale(zoom, zoom)
 
   for (let i = 0; i < canvasState.chunkOrders.length; i++) {
     const chunk = canvasState.chunkOrders[i];
 
-    const screenX = chunk.x - canvasState.editorState.camera.x
-    const screenY = chunk.y - canvasState.editorState.camera.y
-
-    ctx.drawImage(chunk.offscreen, screenX, screenY)
+    ctx.drawImage(chunk.offscreen, chunk.x, chunk.y)
   }
 }
 
 function drawOverlay() {
+  overlayCtx.setTransform(1, 0, 0, 1, 0, 0)
   overlayCtx.clearRect(0, 0, canvasState.width, canvasState.height)
-  if (editorState.isDragging && editorState.state == "press-drag") {
-    const x0 = editorState.x0 - canvasState.editorState.camera.x
-    const y0 = editorState.y0 - canvasState.editorState.camera.y
 
-    const x1 = editorState.x1 - canvasState.editorState.camera.x
-    const y1 = editorState.y1 - canvasState.editorState.camera.y
+  const cam = canvasState.editorState.camera
+  const zoom = canvasState.editorState.zoom
 
+  overlayCtx.translate(cam.x * zoom, cam.y * zoom)
+  overlayCtx.scale(zoom, zoom)
+
+  if (editorState.state == MouseEditorState.SelectDrag) {
+    const x0 = (editorState.x0)
+    const y0 = (editorState.y0)
+
+    const x1 = (editorState.x1)
+    const y1 = (editorState.y1)
+
+    overlayCtx.strokeStyle = "rgba(0,0,255,0.8)"
     overlayCtx.strokeRect(x0, y0, x1 - x0, y1 - y0)
   }
 }

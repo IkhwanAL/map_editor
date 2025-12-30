@@ -1,17 +1,18 @@
 import { mapGenerator, drawMap } from "./canvas.js"
 import { debounce } from "./util.js"
 import { canvasState, editorState } from "./state.js"
+import { MouseEditorState } from "./state_option.js"
 
-document.getElementById("press-drag").addEventListener("click", _ => {
-  const button = document.getElementById("press-drag")
+document.getElementById("select-drag").addEventListener("click", _ => {
+  const button = document.getElementById("select-drag")
   if (editorState.state == "dragging") {
-    editorState.state = "press-drag"
+    editorState.state = MouseEditorState.SelectDrag
     button.style.border = "1px solid blue"
     return
   }
 
   // return old state
-  editorState.state = "dragging"
+  editorState.state = MouseEditorState.Drag
   button.style.border = "none"
 })
 

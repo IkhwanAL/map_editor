@@ -10,3 +10,5 @@ Since This is New Project My Approach is simple, i just want to make it work and
 - A Simple Map
 - A Simple Algorithm For Procedural Generator
 - A Simple Way To Communicate Between Server and Client
+
+- Add Zoom

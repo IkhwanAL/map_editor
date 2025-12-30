@@ -36,7 +36,8 @@ const defaultState = {
     camera: {
       x: 0,
       y: 0,
-    }
+    },
+    zoom: 1 // One Mean Original Position
   }
 }
 
