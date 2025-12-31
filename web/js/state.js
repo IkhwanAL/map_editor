@@ -1,5 +1,6 @@
 import { sfc32 } from "./random.js"
 import { NewPermutationTable } from "./noise.js"
+import { MouseEditorState } from "./state_option.js"
 /**
  * @type {HTMLCanvasElement}
  */
@@ -30,9 +31,11 @@ const defaultState = {
   dirty: false,
   lastMouseX: 0,
   lastMouseY: 0,
+  stopUndo: 0,
+  lastPointer: 0,
   chunkOrders: [],
   chunkAccess: {},
-  editorState: {
+  editorState: { // need to remove the editos state in here is confusing
     camera: {
       x: 0,
       y: 0,
@@ -42,11 +45,11 @@ const defaultState = {
 }
 
 // This is A State Of Mouse Or Editor To Keep Track What's Going On
-// We Wont Store This Or Export This
+// We Wont Store This
 export let editorState = {
   isDragging: false,
   space: false,
-  state: "dragging",
+  mode: MouseEditorState.Idle,
   x0: 0, // Need To Validate Does This Need to be Store in Canvas State
   y0: 0,
   x1: 0,

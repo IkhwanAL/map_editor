@@ -25,7 +25,7 @@ function getActualCanvasSize() {
 getActualCanvasSize()
 
 export function drawMap() {
-  if (editorState.state != MouseEditorState.SelectDrag) {
+  if (editorState.mode != MouseEditorState.SelectDrag) {
     return
   }
 
@@ -70,10 +70,11 @@ export function drawMap() {
   canvasState.chunkAccess.set(`${editorState.x0},${editorState.y0}`, chunk)
 
   requestRedraw({ world: true })
+  canvasState.lastPointer++
 }
 
 export function mapGenerator(option) {
-  if (editorState.state != MouseEditorState.SelectDrag) return
+  if (editorState.mode != MouseEditorState.SelectDrag) return
 
   const width = Math.abs(editorState.x1 - editorState.x0)
   const height = Math.abs(editorState.y1 - editorState.y0)
@@ -149,7 +150,7 @@ function drawOverlay() {
   overlayCtx.translate(-cam.x * zoom, -cam.y * zoom)
   overlayCtx.scale(zoom, zoom)
 
-  if (editorState.state == MouseEditorState.SelectDrag) {
+  if (editorState.mode == MouseEditorState.SelectDrag) {
     const x0 = (editorState.x0)
     const y0 = (editorState.y0)
 

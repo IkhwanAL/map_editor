@@ -3,9 +3,9 @@ import { canvasState, editorState, canvas } from "./state.js"
 import { MouseEditorState } from "./state_option.js"
 
 window.addEventListener("keydown", ev => {
-  console.log(ev.code)
   if (ev.code == "Space") {
     editorState.space = true
+    editorState.mode = MouseEditorState.Drag
     ev.preventDefault()
   }
   return
@@ -14,16 +14,24 @@ window.addEventListener("keydown", ev => {
 window.addEventListener("keyup", ev => {
   if (ev.code == "Space") {
     editorState.space = false
+    editorState.mode = MouseEditorState.Idle
     ev.preventDefault()
   }
   return
 })
 
-canvas.addEventListener("mouseup", () => editorState.isDragging = false)
-canvas.addEventListener("mouseleave", () => editorState.isDragging = false)
+canvas.addEventListener("mouseup", () => { editorState.mode == MouseEditorState.Idle; editorState.isDragging = false })
+canvas.addEventListener("mouseleave", () => { editorState.mode == MouseEditorState.Idle; editorState.isDragging = false })
 
 canvas.addEventListener("mousedown", (ev) => {
-  if (!editorState.space) return
+  if (editorState.mode == MouseEditorState.Idle) return
+
+  if (editorState.mode == MouseEditorState.Drag) {
+    if (!editorState.space) {
+      return
+    }
+  }
+
   const canvasPosition = canvas.getBoundingClientRect()
 
   const zoom = canvasState.editorState.zoom
@@ -51,14 +59,21 @@ canvas.addEventListener("wheel", (ev) => {
 })
 
 canvas.addEventListener("mousemove", (ev) => {
+  if (editorState.mode == MouseEditorState.Idle) return
   if (!editorState.isDragging) return
-  if (!editorState.space) return
+
+  if (editorState.mode == MouseEditorState.Drag) {
+    if (!editorState.space) {
+      return
+    }
+  }
 
   const cam = canvasState.editorState.camera
   const zoom = canvasState.editorState.zoom
 
   const canvasPosition = canvas.getBoundingClientRect()
-  if (editorState.state == MouseEditorState.SelectDrag) {
+  if (editorState.mode == MouseEditorState.SelectDrag) {
+
     const canvasX = ev.clientX - canvasPosition.left
     const canvasY = ev.clientY - canvasPosition.top
 

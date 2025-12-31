@@ -42,7 +42,9 @@ overlayNewMap.addEventListener("click", ev => {
 // Need To Change In the Future
 document.getElementById("saveCanvas").addEventListener("click", _ => {
   const state = convertStateToSavedJson(canvasState)
-  console.log("After Convert", state)
+
+  state.stopUndo = state.chunkOrders.length
+
   const json = JSON.stringify(state)
   const blob = new Blob([json], { type: "application/json" })
   const url = URL.createObjectURL(blob)
