@@ -7,13 +7,13 @@ document.getElementById("select-drag").addEventListener("click", _ => {
   const button = document.getElementById("select-drag")
   if (editorState.state == "dragging") {
     editorState.state = MouseEditorState.SelectDrag
-    button.style.border = "1px solid blue"
+    button.style.border = "2px solid blue"
     return
   }
 
   // return old state
   editorState.state = MouseEditorState.Drag
-  button.style.border = "none"
+  button.style.border = "2px solid black"
 })
 
 document.getElementById("generateMap").addEventListener("click", () => {

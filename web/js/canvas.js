@@ -31,7 +31,6 @@ export function drawMap() {
 
   const { map } = canvasState
 
-  // Times by Zoom to get original width and height
   const width = Math.abs(editorState.x1 - editorState.x0)
   const height = Math.abs(editorState.y1 - editorState.y0)
 

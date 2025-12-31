@@ -45,6 +45,7 @@ const defaultState = {
 // We Wont Store This Or Export This
 export let editorState = {
   isDragging: false,
+  space: false,
   state: "dragging",
   x0: 0, // Need To Validate Does This Need to be Store in Canvas State
   y0: 0,

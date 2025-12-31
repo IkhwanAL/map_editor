@@ -2,10 +2,28 @@ import { requestRedraw } from "./canvas.js"
 import { canvasState, editorState, canvas } from "./state.js"
 import { MouseEditorState } from "./state_option.js"
 
+window.addEventListener("keydown", ev => {
+  console.log(ev.code)
+  if (ev.code == "Space") {
+    editorState.space = true
+    ev.preventDefault()
+  }
+  return
+})
+
+window.addEventListener("keyup", ev => {
+  if (ev.code == "Space") {
+    editorState.space = false
+    ev.preventDefault()
+  }
+  return
+})
+
 canvas.addEventListener("mouseup", () => editorState.isDragging = false)
 canvas.addEventListener("mouseleave", () => editorState.isDragging = false)
 
 canvas.addEventListener("mousedown", (ev) => {
+  if (!editorState.space) return
   const canvasPosition = canvas.getBoundingClientRect()
 
   const zoom = canvasState.editorState.zoom
@@ -34,6 +52,7 @@ canvas.addEventListener("wheel", (ev) => {
 
 canvas.addEventListener("mousemove", (ev) => {
   if (!editorState.isDragging) return
+  if (!editorState.space) return
 
   const cam = canvasState.editorState.camera
   const zoom = canvasState.editorState.zoom
