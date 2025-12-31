@@ -31,11 +31,11 @@ export function drawMap() {
 
   const { map } = canvasState
 
+  // Times by Zoom to get original width and height
   const width = Math.abs(editorState.x1 - editorState.x0)
   const height = Math.abs(editorState.y1 - editorState.y0)
 
   canvasState.dirty = true
-
   const imageData = ctx.createImageData(width, height)
 
   const scaledMap = bilinearInterpolation(map, width, height)
@@ -51,19 +51,8 @@ export function drawMap() {
     }
   }
 
-  let x = editorState.x0
-  let y = editorState.y0
-
-  // in case use mouse move to left side instead of right side
-  if (editorState.x1 < editorState.x0) {
-    x = editorState.x1
-  }
-
-  if (editorState.y1 < editorState.y0) {
-    y = editorState.y1
-  }
-
-  ctx.putImageData(imageData, x - canvasState.editorState.camera.x, y - canvasState.editorState.camera.y)
+  let x = Math.min(editorState.x0, editorState.x1)
+  let y = Math.min(editorState.y0, editorState.y1)
 
   const offscreen = new OffscreenCanvas(width, height)
 
@@ -80,6 +69,8 @@ export function drawMap() {
 
   canvasState.chunkOrders.push(chunk)
   canvasState.chunkAccess.set(`${editorState.x0},${editorState.y0}`, chunk)
+
+  requestRedraw({ world: true })
 }
 
 export function mapGenerator(option) {
@@ -118,7 +109,6 @@ export function mapGenerator(option) {
 }
 
 /**
-  *
   * @description Convert the Map from -1 to 1 into 0 - 1
   */
 function normalizeNoise(noises, min, max) {
@@ -140,7 +130,7 @@ function drawWorld() {
   const cam = canvasState.editorState.camera
   const zoom = canvasState.editorState.zoom
 
-  ctx.translate(cam.x * zoom, cam.y * zoom)
+  ctx.translate(-cam.x * zoom, -cam.y * zoom)
   ctx.scale(zoom, zoom)
 
   for (let i = 0; i < canvasState.chunkOrders.length; i++) {
@@ -157,7 +147,7 @@ function drawOverlay() {
   const cam = canvasState.editorState.camera
   const zoom = canvasState.editorState.zoom
 
-  overlayCtx.translate(cam.x * zoom, cam.y * zoom)
+  overlayCtx.translate(-cam.x * zoom, -cam.y * zoom)
   overlayCtx.scale(zoom, zoom)
 
   if (editorState.state == MouseEditorState.SelectDrag) {

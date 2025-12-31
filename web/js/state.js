@@ -46,7 +46,6 @@ const defaultState = {
 export let editorState = {
   isDragging: false,
   state: "dragging",
-  // Mouse Position
   x0: 0, // Need To Validate Does This Need to be Store in Canvas State
   y0: 0,
   x1: 0,

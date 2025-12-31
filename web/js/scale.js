@@ -6,9 +6,9 @@ export function bilinearInterpolation(map, dx, dy) {
   const sx = (maxX - 1) / (dx - 1)
   const sy = (maxY - 1) / (dy - 1)
 
-  let newMap = new Array(dy)
+  let newMap = []
   for (let y = 0; y < dy; y++) {
-    newMap[y] = new Array(dx)
+    let tempArr = []
     for (let x = 0; x < dx; x++) {
       let originalX = x * sx
       let originalY = y * sy
@@ -24,8 +24,9 @@ export function bilinearInterpolation(map, dx, dy) {
 
       const finalValue = calculateDistibution(horizontalDistance, verticalDistance, x1, x2, y1, y2, map)
 
-      newMap[y][x] = finalValue
+      tempArr.push(finalValue)
     }
+    newMap.push(tempArr)
   }
 
   return newMap
