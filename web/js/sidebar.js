@@ -1,23 +1,23 @@
 import { mapGenerator, drawMap } from "./canvas.js"
 import { debounce } from "./util.js"
-import { canvasState, editorState } from "./state.js"
+import { state } from "./state.js"
 import { MouseEditorState } from "./state_option.js"
 
 document.getElementById("select-drag").addEventListener("click", _ => {
   const button = document.getElementById("select-drag")
-  if (editorState.mode != MouseEditorState.SelectDrag) {
-    editorState.mode = MouseEditorState.SelectDrag
+  if (state.ui.mode != MouseEditorState.SelectDrag) {
+    state.ui.mode = MouseEditorState.SelectDrag
     button.style.border = "2px solid blue"
     return
   }
 
   // return old state
-  editorState.mode = MouseEditorState.Idle
+  state.ui.mode = MouseEditorState.Idle
   button.style.border = "2px solid black"
 })
 
 document.getElementById("generateMap").addEventListener("click", () => {
-  let { generator } = canvasState
+  let { generator } = state.world
   document.querySelectorAll(".generator .form-input input[type=range]").forEach(input => {
     const key = input.dataset.key
     const value = parseFloat(input.value)
@@ -41,7 +41,7 @@ const inputControl = debounce(ev => {
     if (el !== source) el.value = value
   })
 
-  let { generator } = canvasState
+  let { generator } = state.world
 
   generator[key] = value
   mapGenerator(generator)

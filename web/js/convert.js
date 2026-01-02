@@ -1,9 +1,9 @@
-export function convertStateToSavedJson(state) {
+export function convertStateToSavedJson(view) {
 
   const allNewChunkOrder = []
 
-  for (let i = 0; i < state.chunkOrders.length; i++) {
-    const chunk = state.chunkOrders[i];
+  for (let i = 0; i < view.chunkOrders.length; i++) {
+    const chunk = view.chunkOrders[i];
 
     const { imageData } = chunk
     const temp = Array.from(imageData.data)
@@ -13,16 +13,11 @@ export function convertStateToSavedJson(state) {
     allNewChunkOrder.push(newChunk)
   }
 
-  const { chunkOrders, chunkAccess, ...oldState } = state
+  const { chunkOrders, ...oldState } = view
 
   const newState = structuredClone(oldState)
 
   newState.chunkOrders = allNewChunkOrder
-
-  delete newState.map
-  delete newState.lastMouseX
-  delete newState.lastMouseY
-  delete newState.dirty
 
   return newState
 }
