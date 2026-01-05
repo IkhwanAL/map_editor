@@ -1,11 +1,11 @@
 import { requestRedraw } from "./canvas.js"
-import { canvasState, editorState, canvas } from "./state.js"
+import { state, canvas } from "./state.js"
 import { MouseEditorState } from "./state_option.js"
 
 window.addEventListener("keydown", ev => {
   if (ev.code == "Space") {
-    editorState.space = true
-    editorState.mode = MouseEditorState.Drag
+    state.ui.space = true
+    state.ui.mode = MouseEditorState.Drag
     ev.preventDefault()
   }
   return
@@ -13,86 +13,86 @@ window.addEventListener("keydown", ev => {
 
 window.addEventListener("keyup", ev => {
   if (ev.code == "Space") {
-    editorState.space = false
-    editorState.mode = MouseEditorState.Idle
+    state.ui.space = false
+    state.ui.mode = MouseEditorState.Idle
     ev.preventDefault()
   }
   return
 })
 
-canvas.addEventListener("mouseup", () => { editorState.mode == MouseEditorState.Idle; editorState.isDragging = false })
-canvas.addEventListener("mouseleave", () => { editorState.mode == MouseEditorState.Idle; editorState.isDragging = false })
+canvas.addEventListener("mouseup", () => { state.ui.mode == MouseEditorState.Idle; state.ui.isDragging = false })
+canvas.addEventListener("mouseleave", () => { state.ui.mode == MouseEditorState.Idle; state.ui.isDragging = false })
 
 canvas.addEventListener("mousedown", (ev) => {
-  if (editorState.mode == MouseEditorState.Idle) return
+  if (state.ui.mode == MouseEditorState.Idle) return
 
-  if (editorState.mode == MouseEditorState.Drag) {
-    if (!editorState.space) {
+  if (state.ui.mode == MouseEditorState.Drag) {
+    if (!state.ui.space) {
       return
     }
   }
 
   const canvasPosition = canvas.getBoundingClientRect()
 
-  const zoom = canvasState.editorState.zoom
-  const cam = canvasState.editorState.camera
+  const zoom = state.ui.zoom
+  const cam = state.ui.camera
 
-  editorState.isDragging = true
-  canvasState.lastMouseX = ev.clientX
-  canvasState.lastMouseY = ev.clientY
+  state.ui.isDragging = true
+  state.ui.lastMouseX = ev.clientX
+  state.ui.lastMouseY = ev.clientY
 
   const canvasX = ev.clientX - canvasPosition.left
   const canvasY = ev.clientY - canvasPosition.top
 
-  editorState.x0 = canvasX / zoom + cam.x
-  editorState.y0 = canvasY / zoom + cam.y
+  state.ui.x0 = canvasX / zoom + cam.x
+  state.ui.y0 = canvasY / zoom + cam.y
 })
 
 canvas.addEventListener("wheel", (ev) => {
   if (ev.deltaY < 0) {
-    canvasState.editorState.zoom *= 1.1
+    state.ui.zoom *= 1.1
   } else {
-    canvasState.editorState.zoom /= 1.1
+    state.ui.zoom /= 1.1
   }
 
   requestRedraw({ world: true, overlay: true })
 })
 
 canvas.addEventListener("mousemove", (ev) => {
-  if (editorState.mode == MouseEditorState.Idle) return
-  if (!editorState.isDragging) return
+  if (state.ui.mode == MouseEditorState.Idle) return
+  if (!state.ui.isDragging) return
 
-  if (editorState.mode == MouseEditorState.Drag) {
-    if (!editorState.space) {
+  if (state.ui.mode == MouseEditorState.Drag) {
+    if (!state.ui.space) {
       return
     }
   }
 
-  const cam = canvasState.editorState.camera
-  const zoom = canvasState.editorState.zoom
+  const cam = state.ui.camera
+  const zoom = state.ui.zoom
 
   const canvasPosition = canvas.getBoundingClientRect()
-  if (editorState.mode == MouseEditorState.SelectDrag) {
+  if (state.ui.mode == MouseEditorState.SelectDrag) {
 
     const canvasX = ev.clientX - canvasPosition.left
     const canvasY = ev.clientY - canvasPosition.top
 
-    editorState.x1 = canvasX / zoom + cam.x
-    editorState.y1 = canvasY / zoom + cam.y
+    state.ui.x1 = canvasX / zoom + cam.x
+    state.ui.y1 = canvasY / zoom + cam.y
 
     requestRedraw({ overlay: true })
     return
   }
 
-  const deltaX = ev.clientX - canvasState.lastMouseX
-  const deltaY = ev.clientY - canvasState.lastMouseY
+  const deltaX = ev.clientX - state.ui.lastMouseX
+  const deltaY = ev.clientY - state.ui.lastMouseY
 
-  canvasState.editorState.camera.x -= deltaX
-  canvasState.editorState.camera.y -= deltaY
+  state.ui.camera.x -= deltaX
+  state.ui.camera.y -= deltaY
 
   requestRedraw({ overlay: true, world: true })
 
-  canvasState.lastMouseX = ev.clientX
-  canvasState.lastMouseY = ev.clientY
+  state.ui.lastMouseX = ev.clientX
+  state.ui.lastMouseY = ev.clientY
 })
 

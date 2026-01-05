@@ -1,3 +1,9 @@
+/**
+ * 
+ * Some People Recommend Hash Function
+ *
+ */
+
 export function NewPermutationTable(rand) {
   const perm = new Array(256)
 

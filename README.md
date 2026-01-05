@@ -15,3 +15,7 @@ Since This is New Project My Approach is simple, i just want to make it work and
 
 I think there still a bug in perlin noise, but i cant prove it yet
 after i change the frequency, persistence, lacunarity, octaves it gone. Or maybe that just how it behaves
+
+## Bug
+
+- If i zoom in so much the pin became too fast or to strange (Not Critical, just a little bit strange)

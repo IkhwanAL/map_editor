@@ -1,4 +1,4 @@
-import { canvasState, editorState, canvas, overlay } from "./state.js"
+import { state, canvas, overlay } from "./state.js"
 import { FractalNoise } from "./noise.js"
 import { clamp } from "./util.js"
 import { bilinearInterpolation } from "./scale.js"
@@ -9,32 +9,32 @@ const overlayCtx = overlay.getContext("2d")
 
 function getActualCanvasSize() {
   const editorRect = editor.getBoundingClientRect()
-  canvasState.width = Math.ceil(editorRect.width)
-  canvasState.height = Math.ceil(editorRect.height)
+  state.ui.width = Math.ceil(editorRect.width)
+  state.ui.height = Math.ceil(editorRect.height)
 
-  canvas.width = canvasState.width
-  canvas.height = canvasState.height
+  canvas.width = state.ui.width
+  canvas.height = state.ui.height
 
-  overlay.width = canvasState.width
-  overlay.height = canvasState.height
+  overlay.width = state.ui.width
+  overlay.height = state.ui.height
 
   ctx.fillStyle = "#FFF"
-  ctx.fillRect(0, 0, canvasState.width, canvasState.height)
+  ctx.fillRect(0, 0, state.ui.width, state.ui.height)
 }
 
 getActualCanvasSize()
 
 export function drawMap() {
-  if (editorState.mode != MouseEditorState.SelectDrag) {
+  if (state.ui.mode != MouseEditorState.SelectDrag) {
     return
   }
 
-  const { map } = canvasState
+  const { map } = state.view
 
-  const width = Math.abs(editorState.x1 - editorState.x0)
-  const height = Math.abs(editorState.y1 - editorState.y0)
+  const width = Math.abs(state.ui.x1 - state.ui.x0)
+  const height = Math.abs(state.ui.y1 - state.ui.y0)
 
-  canvasState.dirty = true
+  state.view.dirty = true
   const imageData = ctx.createImageData(width, height)
 
   const scaledMap = bilinearInterpolation(map, width, height)
@@ -50,8 +50,8 @@ export function drawMap() {
     }
   }
 
-  let x = Math.min(editorState.x0, editorState.x1)
-  let y = Math.min(editorState.y0, editorState.y1)
+  let x = Math.min(state.ui.x0, state.ui.x1)
+  let y = Math.min(state.ui.y0, state.ui.y1)
 
   const offscreen = new OffscreenCanvas(width, height)
 
@@ -66,20 +66,18 @@ export function drawMap() {
     imageData
   }
 
-  canvasState.chunkOrders.push(chunk)
-  canvasState.chunkAccess.set(`${editorState.x0},${editorState.y0}`, chunk)
+  state.view.chunkOrders.push(chunk)
 
   requestRedraw({ world: true })
-  canvasState.lastPointer++
 }
 
 export function mapGenerator(option) {
-  if (editorState.mode != MouseEditorState.SelectDrag) return
+  if (state.ui.mode != MouseEditorState.SelectDrag) return
 
-  const width = Math.abs(editorState.x1 - editorState.x0)
-  const height = Math.abs(editorState.y1 - editorState.y0)
+  const width = Math.abs(state.ui.x1 - state.ui.x0)
+  const height = Math.abs(state.ui.y1 - state.ui.y0)
 
-  const { permutationTable } = canvasState
+  const { permutationTable } = state.world
 
   let noises = []
 
@@ -88,6 +86,8 @@ export function mapGenerator(option) {
 
   const sampleHeight = Math.floor(height / 2)
   const sampleWidth = Math.floor(width / 2)
+
+  // console.log(option, permutationTable, state.ui)
 
   for (let y = 0; y < sampleHeight; y++) {
     noises[y] = []
@@ -105,7 +105,7 @@ export function mapGenerator(option) {
       noises[y][x] = noise
     }
   }
-  canvasState.map = normalizeNoise(noises, min, max)
+  state.view.map = normalizeNoise(noises, min, max)
 }
 
 /**
@@ -125,16 +125,16 @@ function normalizeNoise(noises, min, max) {
 
 function drawWorld() {
   ctx.setTransform(1, 0, 0, 1, 0, 0)
-  ctx.clearRect(0, 0, canvasState.width, canvasState.height)
+  ctx.clearRect(0, 0, state.ui.width, state.ui.height)
 
-  const cam = canvasState.editorState.camera
-  const zoom = canvasState.editorState.zoom
+  const cam = state.ui.camera
+  const zoom = state.ui.zoom
 
   ctx.translate(-cam.x * zoom, -cam.y * zoom)
   ctx.scale(zoom, zoom)
 
-  for (let i = 0; i < canvasState.chunkOrders.length; i++) {
-    const chunk = canvasState.chunkOrders[i];
+  for (let i = 0; i < state.view.chunkOrders.length; i++) {
+    const chunk = state.view.chunkOrders[i];
 
     ctx.drawImage(chunk.offscreen, chunk.x, chunk.y)
   }
@@ -142,20 +142,20 @@ function drawWorld() {
 
 function drawOverlay() {
   overlayCtx.setTransform(1, 0, 0, 1, 0, 0)
-  overlayCtx.clearRect(0, 0, canvasState.width, canvasState.height)
+  overlayCtx.clearRect(0, 0, state.ui.width, state.ui.height)
 
-  const cam = canvasState.editorState.camera
-  const zoom = canvasState.editorState.zoom
+  const cam = state.ui.camera
+  const zoom = state.ui.zoom
 
   overlayCtx.translate(-cam.x * zoom, -cam.y * zoom)
   overlayCtx.scale(zoom, zoom)
 
-  if (editorState.mode == MouseEditorState.SelectDrag) {
-    const x0 = (editorState.x0)
-    const y0 = (editorState.y0)
+  if (state.ui.mode == MouseEditorState.SelectDrag) {
+    const x0 = (state.ui.x0)
+    const y0 = (state.ui.y0)
 
-    const x1 = (editorState.x1)
-    const y1 = (editorState.y1)
+    const x1 = (state.ui.x1)
+    const y1 = (state.ui.y1)
 
     overlayCtx.strokeStyle = "rgba(0,0,255,0.8)"
     overlayCtx.strokeRect(x0, y0, x1 - x0, y1 - y0)
@@ -184,17 +184,17 @@ function frame() {
   needsRedraw = false
 }
 
-export function drawCanvasFromLoadedState(state) {
+export function drawCanvasFromLoadedState(newState) {
   const newChunkState = []
 
-  for (let i = 0; i < state.chunkOrders.length; i++) {
-    const chunk = state.chunkOrders[i];
+  for (let i = 0; i < newState.chunkOrders.length; i++) {
+    const chunk = newState.chunkOrders[i];
 
     const imageData = ctx.createImageData(chunk.width, chunk.height)
 
     imageData.data.set(new Uint8ClampedArray(chunk.imageData))
 
-    ctx.putImageData(imageData, chunk.x - state.editorState.camera.x, chunk.y - state.editorState.camera.y)
+    ctx.putImageData(imageData, chunk.x - state.ui.camera.x, chunk.y - state.ui.camera.y)
 
     const offscreen = new OffscreenCanvas(chunk.width, chunk.height)
 
@@ -204,10 +204,9 @@ export function drawCanvasFromLoadedState(state) {
 
     const newChunk = { ...chunk, imageData: imageData, offscreen: offscreen }
     newChunkState.push(newChunk)
-    state.chunkAccess.set(`${chunk.x},${chunk.y}`, newChunk)
   }
 
-  state.chunkOrders = newChunkState
+  newState.chunkOrders = newChunkState
 
-  return state
+  return newState
 }

@@ -1,14 +1,14 @@
-import { canvasState, freshNewState, newState, setCanvasState } from "./state.js"
-import { mapGenerator, drawMap, drawCanvasFromLoadedState } from "./canvas.js"
+import { state, newState, setCanvasState } from "./state.js"
+import { drawCanvasFromLoadedState } from "./canvas.js"
 import { convertStateToSavedJson } from "./convert.js"
 
 
 const overlayNewMap = document.getElementById("newMapOverlay")
 document.getElementById("confirmNew").addEventListener("click", _ => {
-  if (canvasState.dirty == true) {
+  if (state.view.dirty == true) {
     const ok = confirm("Discard current map?")
     if (!ok) return
-    ctx.clearRect(0, 0, canvasState.width, canvasState.height)
+    ctx.clearRect(0, 0, state.ui.width, state.ui.height)
   }
 
   setCanvasState(newState())
@@ -39,13 +39,13 @@ overlayNewMap.addEventListener("click", ev => {
   }
 })
 
-// Need To Change In the Future
+// TODO: Need To Change Since State Change Drastically
 document.getElementById("saveCanvas").addEventListener("click", _ => {
-  const state = convertStateToSavedJson(canvasState)
+  const viewState = convertStateToSavedJson(state.view)
 
-  state.stopUndo = state.chunkOrders.length
+  const tempState = { ...state, view: viewState }
 
-  const json = JSON.stringify(state)
+  const json = JSON.stringify(tempState)
   const blob = new Blob([json], { type: "application/json" })
   const url = URL.createObjectURL(blob)
 
@@ -54,7 +54,7 @@ document.getElementById("saveCanvas").addEventListener("click", _ => {
   a.download = "test.json" // Name Something Better or Open a File Choser
   a.click()
 
-  canvasState.dirty = false
+  state.view.dirty = false
 
   URL.revokeObjectURL(url)
 })
@@ -65,7 +65,7 @@ document.getElementById("openCanvas").addEventListener("click", _ => {
   inputFile.setAttribute("accept", "application/json")
   inputFile.value = ""
   inputFile.click()
-
+  console.log("Click AA")
   inputFile.addEventListener("change", loadFile)
 })
 
@@ -76,22 +76,20 @@ const loadFile = ev => {
   const reader = new FileReader()
   reader.onload = e => {
     const state = JSON.parse(e.target.result)
-
     loadState(state)
 
   }
   reader.readAsText(file)
 }
 
-function loadState(state) {
-  if (canvasState.dirty == true) {
+function loadState(newState) {
+  if (state.view.dirty == true) {
     const ok = confirm("Discard current map?")
     if (!ok) return
   }
 
-  let newState = freshNewState()
-  newState = { ...newState, ...state }
-
-  newState = drawCanvasFromLoadedState(newState)
+  const viewState = drawCanvasFromLoadedState(newState.view)
+  console.log(viewState)
+  newState.view = viewState
   setCanvasState(newState)
 }
