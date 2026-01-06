@@ -143,12 +143,17 @@ export function reformSavedState(newState) {
     chunks.set(cxcy, stateChunk)
   }
 
+  const rand = sfc32(newState.seed["1"], newState.seed["2"], newState.seed["3"], newState.seed["4"])
+
+  const perm = NewPermutationTable(rand)
+
   const worldState = {
     seed1: newState.seed["1"],
     seed2: newState.seed["2"],
     seed3: newState.seed["3"],
     seed4: newState.seed["4"],
     generator: newState.mapGenerator,
+    permutationTable: perm,
     chunks: chunks
   }
 
