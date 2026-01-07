@@ -1,7 +1,5 @@
-import { state, newState, setCanvasState } from "./state.js"
-import { drawCanvasFromLoadedState } from "./canvas.js"
-import { convertStateToSavedJson } from "./convert.js"
-
+import { loadViewStateFromSavedState } from "./canvas.js"
+import { state, newState, setWorldState, saveState, reformSavedState } from "./state.js"
 
 const overlayNewMap = document.getElementById("newMapOverlay")
 document.getElementById("confirmNew").addEventListener("click", _ => {
@@ -39,15 +37,13 @@ overlayNewMap.addEventListener("click", ev => {
   }
 })
 
-// TODO: Need To Change Since State Change Drastically
+// TODO: Maybe Add Custom Name So User Can Name the File They Want
 document.getElementById("saveCanvas").addEventListener("click", _ => {
-  const viewState = convertStateToSavedJson(state.view)
+  const toSavedState = saveState(state.world)
 
-  const tempState = { ...state, view: viewState }
-
-  const json = JSON.stringify(tempState)
-  const blob = new Blob([json], { type: "application/json" })
-  const url = URL.createObjectURL(blob)
+  const stringifySavedState = JSON.stringify(toSavedState)
+  const blobSavedState = new Blob([stringifySavedState], { type: "application/json" })
+  const url = URL.createObjectURL(blobSavedState)
 
   const a = document.createElement("a")
   a.href = url
@@ -57,6 +53,8 @@ document.getElementById("saveCanvas").addEventListener("click", _ => {
   state.view.dirty = false
 
   URL.revokeObjectURL(url)
+
+  return
 })
 
 document.getElementById("openCanvas").addEventListener("click", _ => {
@@ -65,7 +63,6 @@ document.getElementById("openCanvas").addEventListener("click", _ => {
   inputFile.setAttribute("accept", "application/json")
   inputFile.value = ""
   inputFile.click()
-  console.log("Click AA")
   inputFile.addEventListener("change", loadFile)
 })
 
@@ -88,8 +85,7 @@ function loadState(newState) {
     if (!ok) return
   }
 
-  const viewState = drawCanvasFromLoadedState(newState.view)
-  console.log(viewState)
-  newState.view = viewState
-  setCanvasState(newState)
+  const worldState = reformSavedState(newState)
+  setWorldState(worldState)
+  loadViewStateFromSavedState(state)
 }

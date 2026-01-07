@@ -44,8 +44,11 @@ canvas.addEventListener("mousedown", (ev) => {
   const canvasX = ev.clientX - canvasPosition.left
   const canvasY = ev.clientY - canvasPosition.top
 
-  state.ui.x0 = canvasX / zoom + cam.x
-  state.ui.y0 = canvasY / zoom + cam.y
+  if (state.ui.mode == MouseEditorState.SelectDrag) {
+    state.ui.x0 = canvasX / zoom + cam.x
+    state.ui.y0 = canvasY / zoom + cam.y
+  }
+
 })
 
 canvas.addEventListener("wheel", (ev) => {

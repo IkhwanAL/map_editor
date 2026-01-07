@@ -11,6 +11,8 @@ export const canvas = document.getElementById("canvas")
  */
 export const overlay = document.getElementById("overlay")
 
+export const CHUNK_SIZE = 16
+
 export function newState() {
   let freshState = {
     version: 1,
@@ -27,7 +29,7 @@ export function newState() {
         frequency: null,
         amplitude: null
       },
-      chunk: []
+      chunks: new Map()
     },
     ui: {
       width: 0,
@@ -48,7 +50,7 @@ export function newState() {
       zoom: 1 // One Mean Original Position
     },
     view: {
-      chunkOrders: [],
+      chunkOrders: new Map(),
       dirty: false,
       map: [],
     },
@@ -87,8 +89,73 @@ export function setupGenerator() {
   }
 }
 
-export function setCanvasState(newState) {
-  state.world = newState.world
-  state.view = newState.view
+export function setWorldState(worldState) {
+  state.world = worldState
 }
 
+export function saveState(stateWorld) {
+  const newChunk = {}
+
+  for (const [key, chunk] of stateWorld.chunks.entries()) {
+    const data = Array.from(chunk.data)
+    const occupied = Array.from(chunk.occupied)
+    newChunk[key] = {
+      data,
+      occupied
+    }
+  }
+
+  const toSavedState = {
+    version: 1,
+    seed: {
+      1: stateWorld.seed1,
+      2: stateWorld.seed2,
+      3: stateWorld.seed3,
+      4: stateWorld.seed4
+    },
+    mapGenerator: {
+      octaves: stateWorld.generator.octaves,
+      persistence: stateWorld.generator.persistence,
+      lacunarity: stateWorld.generator.lacunarity,
+      frequency: stateWorld.generator.frequency,
+      amplitude: stateWorld.generator.amplitude,
+    },
+    world: { chunks: newChunk }
+  }
+
+  return toSavedState
+}
+
+export function reformSavedState(newState) {
+  const chunks = new Map()
+
+  for (const [cxcy, chunk] of Object.entries(newState.world.chunks)) {
+    const coordinates = cxcy.split(",")
+
+    const stateChunk = {
+      cx: coordinates[0],
+      cy: coordinates[1],
+      data: new Float32Array(chunk.data),
+      occupied: new Uint8Array(chunk.occupied),
+      dirty: false
+    }
+
+    chunks.set(cxcy, stateChunk)
+  }
+
+  const rand = sfc32(newState.seed["1"], newState.seed["2"], newState.seed["3"], newState.seed["4"])
+
+  const perm = NewPermutationTable(rand)
+
+  const worldState = {
+    seed1: newState.seed["1"],
+    seed2: newState.seed["2"],
+    seed3: newState.seed["3"],
+    seed4: newState.seed["4"],
+    generator: newState.mapGenerator,
+    permutationTable: perm,
+    chunks: chunks
+  }
+
+  return worldState
+}

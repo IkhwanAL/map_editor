@@ -10,12 +10,9 @@ Since This is New Project My Approach is simple, i just want to make it work and
 - A Simple Map
 - A Simple Algorithm For Procedural Generator
 - A Simple Way To Communicate Between Server and Client
-
-## Concern
-
-I think there still a bug in perlin noise, but i cant prove it yet
-after i change the frequency, persistence, lacunarity, octaves it gone. Or maybe that just how it behaves
+- A Simple Feature To Brush Or Play With Canvas
+- An Undo / Redo Cmd
 
 ## Bug
 
-- If i zoom in so much the pin became too fast or to strange (Not Critical, just a little bit strange)
+

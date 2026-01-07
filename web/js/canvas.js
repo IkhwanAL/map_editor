@@ -1,10 +1,11 @@
-import { state, canvas, overlay } from "./state.js"
+import { state, canvas, overlay, CHUNK_SIZE } from "./state.js"
 import { FractalNoise } from "./noise.js"
 import { clamp } from "./util.js"
 import { bilinearInterpolation } from "./scale.js"
 import { MouseEditorState } from "./state_option.js"
 
 const ctx = canvas.getContext("2d")
+ctx.imageSmoothingEnabled = false
 const overlayCtx = overlay.getContext("2d")
 
 function getActualCanvasSize() {
@@ -24,29 +25,51 @@ function getActualCanvasSize() {
 
 getActualCanvasSize()
 
+
 export function drawMap() {
   if (state.ui.mode != MouseEditorState.SelectDrag) {
     return
   }
 
-  const { map } = state.view
+  const worldYMin = Math.min(state.ui.y0, state.ui.y1)
+  const worldYMax = Math.max(state.ui.y0, state.ui.y1)
 
-  const width = Math.abs(state.ui.x1 - state.ui.x0)
-  const height = Math.abs(state.ui.y1 - state.ui.y0)
+  const worldXMin = Math.min(state.ui.x0, state.ui.x1)
+  const worldXMax = Math.max(state.ui.x0, state.ui.x1)
+
+  const height = worldYMax - worldYMin
+  const width = worldXMax - worldXMin
 
   state.view.dirty = true
   const imageData = ctx.createImageData(width, height)
 
-  const scaledMap = bilinearInterpolation(map, width, height)
-  let index = 0
-  for (let y = 0; y < scaledMap.length; y++) {
-    for (let x = 0; x < scaledMap[y].length; x++) {
-      const grid = scaledMap[y][x]
-      const n = clamp(grid * 255 | 0, 0, 255)
-      imageData.data[index++] = n
-      imageData.data[index++] = n
-      imageData.data[index++] = n
-      imageData.data[index++] = 255
+  let imageIndex = 0
+  console.log(height, width, "Draw Map")
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const worldX = x + worldXMin
+      const worldY = y + worldYMin
+
+      const cx = Math.floor(worldX / CHUNK_SIZE)
+      const cy = Math.floor(worldY / CHUNK_SIZE)
+
+      const key = cx + "," + cy
+
+      let value = 0
+      const chunk = state.world.chunks.get(key)
+      if (chunk) {
+        const lx = Math.floor(worldX - cx * CHUNK_SIZE)
+        const ly = Math.floor(worldY - cy * CHUNK_SIZE)
+        const chunkLocalIndex = Math.floor(ly * CHUNK_SIZE + lx)
+
+        value = chunk.data[chunkLocalIndex]
+      }
+      value = (value + 1) * 0.5
+      const n = clamp(value * 255 | 0, 0, 255)
+      imageData.data[imageIndex++] = n
+      imageData.data[imageIndex++] = n
+      imageData.data[imageIndex++] = n
+      imageData.data[imageIndex++] = 255
     }
   }
 
@@ -55,18 +78,19 @@ export function drawMap() {
 
   const offscreen = new OffscreenCanvas(width, height)
 
-  const offcvs = offscreen.getContext("2d")
-  offcvs.putImageData(imageData, 0, 0)
+  const offctx = offscreen.getContext("2d")
+  offctx.imageSmoothingEnabled = false
+  offctx.putImageData(imageData, 0, 0)
+
 
   const chunk = {
     x: x,
     y: y,
     width, height,
     offscreen,
-    imageData
   }
 
-  state.view.chunkOrders.push(chunk)
+  state.view.chunkOrders.set(`${x},${y}`, chunk)
 
   requestRedraw({ world: true })
 }
@@ -74,53 +98,48 @@ export function drawMap() {
 export function mapGenerator(option) {
   if (state.ui.mode != MouseEditorState.SelectDrag) return
 
-  const width = Math.abs(state.ui.x1 - state.ui.x0)
-  const height = Math.abs(state.ui.y1 - state.ui.y0)
-
   const { permutationTable } = state.world
 
-  let noises = []
+  const worldYMin = Math.min(state.ui.y0, state.ui.y1)
+  const worldYMax = Math.max(state.ui.y0, state.ui.y1)
 
-  let max = -Infinity
-  let min = Infinity
+  const worldXMin = Math.min(state.ui.x0, state.ui.x1)
+  const worldXMax = Math.max(state.ui.x0, state.ui.x1)
 
-  const sampleHeight = Math.floor(height / 2)
-  const sampleWidth = Math.floor(width / 2)
+  const height = worldYMax - worldYMin
+  const width = worldXMax - worldXMin
 
-  // console.log(option, permutationTable, state.ui)
+  // const SCALE = 1
+  for (let sy = 0; sy < height; sy++) {
+    for (let sx = 0; sx < width; sx++) {
+      const worldX = Math.floor(worldXMin + sx)
+      const worldY = Math.floor(worldYMin + sy)
 
-  for (let y = 0; y < sampleHeight; y++) {
-    noises[y] = []
-    for (let x = 0; x < sampleWidth; x++) {
-      const noise = FractalNoise(x, y, permutationTable, option)
+      const noise = FractalNoise(worldX, worldY, permutationTable, option)
 
-      if (noise > max) {
-        max = noise
-      }
-
-      if (noise < min) {
-        min = noise
-      }
-
-      noises[y][x] = noise
+      writeToChunk(worldX, worldY, noise)
     }
   }
-  state.view.map = normalizeNoise(noises, min, max)
 }
 
-/**
-  * @description Convert the Map from -1 to 1 into 0 - 1
-  */
-function normalizeNoise(noises, min, max) {
-  const range = max - min
+function writeToChunk(worldX, worldY, noise) {
+  const cx = Math.floor(worldX / CHUNK_SIZE)
+  const cy = Math.floor(worldY / CHUNK_SIZE)
 
-  for (let y = 0; y < noises.length; y++) {
-    for (let x = 0; x < noises[y].length; x++) {
-      noises[y][x] = (noises[y][x] - min) / range
-    }
+  const key = cx + "," + cy
+  let chunk = state.world.chunks.get(key)
+  if (!chunk) {
+    const float32 = new Float32Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
+    const uint8 = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
+    chunk = { cx: cx, cy: cy, data: float32, dirty: false, occupied: uint8 }
+    state.world.chunks.set(key, chunk)
   }
 
-  return noises
+  const lx = Math.floor(worldX - cx * CHUNK_SIZE)
+  const ly = Math.floor(worldY - cy * CHUNK_SIZE)
+  const index = Math.floor(ly * CHUNK_SIZE + lx)
+  chunk.data[index] = noise
+  chunk.occupied[index] = 1
 }
 
 function drawWorld() {
@@ -131,11 +150,10 @@ function drawWorld() {
   const zoom = state.ui.zoom
 
   ctx.translate(-cam.x * zoom, -cam.y * zoom)
+
   ctx.scale(zoom, zoom)
 
-  for (let i = 0; i < state.view.chunkOrders.length; i++) {
-    const chunk = state.view.chunkOrders[i];
-
+  for (const chunk of state.view.chunkOrders.values()) {
     ctx.drawImage(chunk.offscreen, chunk.x, chunk.y)
   }
 }
@@ -175,6 +193,7 @@ export function requestRedraw({ world = false, overlay = false } = {}) {
     requestAnimationFrame(frame)
   }
 }
+
 function frame() {
   if (redrawWorld) drawWorld()
   if (redrawOverlay) drawOverlay()
@@ -184,29 +203,49 @@ function frame() {
   needsRedraw = false
 }
 
-export function drawCanvasFromLoadedState(newState) {
-  const newChunkState = []
+export function loadViewStateFromSavedState(newState) {
+  const worldState = newState.world
+  const chunkOrders = new Map()
+  for (const chunk of worldState.chunks.values()) {
+    const pixels = new Uint8ClampedArray(CHUNK_SIZE * CHUNK_SIZE * 4)
 
-  for (let i = 0; i < newState.chunkOrders.length; i++) {
-    const chunk = newState.chunkOrders[i];
+    let index = 0
+    for (let i = 0; i < chunk.data.length; i++) {
+      const data = chunk.data[i];
+      const occupied = chunk.occupied[i]
 
-    const imageData = ctx.createImageData(chunk.width, chunk.height)
+      let value = clamp(data * 255 | 0, 0, 255)
+      if (occupied == 0) {
+        value = 255
+      }
 
-    imageData.data.set(new Uint8ClampedArray(chunk.imageData))
+      pixels[index++] = value
+      pixels[index++] = value
+      pixels[index++] = value
+      pixels[index++] = 255
+    }
 
-    ctx.putImageData(imageData, chunk.x - state.ui.camera.x, chunk.y - state.ui.camera.y)
+    const imageData = new ImageData(pixels, CHUNK_SIZE, CHUNK_SIZE)
+    const offscreen = new OffscreenCanvas(CHUNK_SIZE, CHUNK_SIZE)
+    const offCtx = offscreen.getContext("2d")
 
-    const offscreen = new OffscreenCanvas(chunk.width, chunk.height)
+    offCtx.putImageData(imageData, 0, 0)
 
-    const offContext = offscreen.getContext("2d")
+    const x = chunk.cx * CHUNK_SIZE
+    const y = chunk.cy * CHUNK_SIZE
 
-    offContext.putImageData(imageData, 0, 0)
+    const key = `${chunk.cx},${chunk.cy}`
 
-    const newChunk = { ...chunk, imageData: imageData, offscreen: offscreen }
-    newChunkState.push(newChunk)
+    chunkOrders.set(key, {
+      x: x,
+      y: y,
+      width: CHUNK_SIZE,
+      height: CHUNK_SIZE,
+      offscreen: offscreen
+    })
   }
 
-  newState.chunkOrders = newChunkState
+  state.view.chunkOrders = chunkOrders
 
-  return newState
+  requestRedraw({ world: true })
 }
