@@ -5,6 +5,7 @@ import { bilinearInterpolation } from "./scale.js"
 import { MouseEditorState } from "./state_option.js"
 
 const ctx = canvas.getContext("2d")
+ctx.imageSmoothingEnabled = false
 const overlayCtx = overlay.getContext("2d")
 
 function getActualCanvasSize() {
@@ -43,6 +44,7 @@ export function drawMap() {
   const imageData = ctx.createImageData(width, height)
 
   let imageIndex = 0
+  console.log(height, width, "Draw Map")
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const worldX = x + worldXMin
@@ -62,6 +64,7 @@ export function drawMap() {
 
         value = chunk.data[chunkLocalIndex]
       }
+      value = (value + 1) * 0.5
       const n = clamp(value * 255 | 0, 0, 255)
       imageData.data[imageIndex++] = n
       imageData.data[imageIndex++] = n
@@ -75,8 +78,10 @@ export function drawMap() {
 
   const offscreen = new OffscreenCanvas(width, height)
 
-  const offcvs = offscreen.getContext("2d")
-  offcvs.putImageData(imageData, 0, 0)
+  const offctx = offscreen.getContext("2d")
+  offctx.imageSmoothingEnabled = false
+  offctx.putImageData(imageData, 0, 0)
+
 
   const chunk = {
     x: x,
@@ -104,82 +109,37 @@ export function mapGenerator(option) {
   const height = worldYMax - worldYMin
   const width = worldXMax - worldXMin
 
-  const SCALE = 2
+  // const SCALE = 1
+  for (let sy = 0; sy < height; sy++) {
+    for (let sx = 0; sx < width; sx++) {
+      const worldX = Math.floor(worldXMin + sx)
+      const worldY = Math.floor(worldYMin + sy)
 
-  const sampleHeigth = Math.floor(height / SCALE)
-  const sampleWidth = Math.floor(width / SCALE)
+      const noise = FractalNoise(worldX, worldY, permutationTable, option)
 
-  let noises = Array.from({ length: sampleHeigth }, () => Array.from(sampleWidth))
-
-  let max = -Infinity
-  let min = Infinity
-
-  for (let sy = 0; sy < sampleHeigth; sy++) {
-    for (let sx = 0; sx < sampleWidth; sx++) {
-      const sampleWorldX = Math.floor(worldXMin + sx * SCALE)
-      const sampleWorldY = Math.floor(worldYMin + sy * SCALE)
-
-      const noise = FractalNoise(sampleWorldX, sampleWorldY, permutationTable, option)
-
-      if (noise > max) {
-        max = noise
-      }
-
-      if (noise < min) {
-        min = noise
-      }
-
-      noises[sy][sx] = noise
+      writeToChunk(worldX, worldY, noise)
     }
   }
-
-  noises = normalizeNoise(noises, min, max)
-
-  const scaled = bilinearInterpolation(noises, width, height)
-
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const worldX = x + worldXMin
-      const worldY = y + worldYMin
-
-      const noise = scaled[y][x]
-
-      const cx = Math.floor(worldX / CHUNK_SIZE)
-      const cy = Math.floor(worldY / CHUNK_SIZE)
-
-      const key = cx + "," + cy
-
-      let chunk = state.world.chunks.get(key)
-      if (!chunk) {
-        const float32 = new Float32Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
-        const uint8 = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
-        chunk = { cx: cx, cy: cy, data: float32, dirty: false, occupied: uint8 }
-        state.world.chunks.set(key, chunk)
-      }
-
-      const lx = Math.floor(worldX - cx * CHUNK_SIZE)
-      const ly = Math.floor(worldY - cy * CHUNK_SIZE)
-      const index = Math.floor(ly * CHUNK_SIZE + lx)
-      chunk.data[index] = noise
-      chunk.occupied[index] = 1
-    }
-  }
-
 }
 
-/**
-  * @description Convert the Map from -1 to 1 into 0 - 1
-  */
-function normalizeNoise(noises, min, max) {
-  const range = max - min
+function writeToChunk(worldX, worldY, noise) {
+  const cx = Math.floor(worldX / CHUNK_SIZE)
+  const cy = Math.floor(worldY / CHUNK_SIZE)
 
-  for (let y = 0; y < noises.length; y++) {
-    for (let x = 0; x < noises[y].length; x++) {
-      noises[y][x] = (noises[y][x] - min) / range
-    }
+  const key = cx + "," + cy
+  let chunk = state.world.chunks.get(key)
+  if (!chunk) {
+    const float32 = new Float32Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
+    const uint8 = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
+    chunk = { cx: cx, cy: cy, data: float32, dirty: false, occupied: uint8 }
+    state.world.chunks.set(key, chunk)
   }
 
-  return noises
+  const lx = Math.floor(worldX - cx * CHUNK_SIZE)
+  const ly = Math.floor(worldY - cy * CHUNK_SIZE)
+  const index = Math.floor(ly * CHUNK_SIZE + lx)
+  chunk.data[index] = noise
+  chunk.occupied[index] = 1
 }
 
 function drawWorld() {
@@ -190,6 +150,7 @@ function drawWorld() {
   const zoom = state.ui.zoom
 
   ctx.translate(-cam.x * zoom, -cam.y * zoom)
+
   ctx.scale(zoom, zoom)
 
   for (const chunk of state.view.chunkOrders.values()) {
@@ -232,6 +193,7 @@ export function requestRedraw({ world = false, overlay = false } = {}) {
     requestAnimationFrame(frame)
   }
 }
+
 function frame() {
   if (redrawWorld) drawWorld()
   if (redrawOverlay) drawOverlay()
@@ -242,7 +204,6 @@ function frame() {
 }
 
 export function loadViewStateFromSavedState(newState) {
-  // Load View State
   const worldState = newState.world
   const chunkOrders = new Map()
   for (const chunk of worldState.chunks.values()) {
