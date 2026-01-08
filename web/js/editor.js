@@ -1,6 +1,7 @@
-import { requestRedraw } from "./canvas.js"
-import { state, canvas } from "./state.js"
+import { requestRedraw, undo } from "./canvas.js"
+import { state, canvas, CHUNK_SIZE } from "./state.js"
 import { MouseEditorState } from "./state_option.js"
+import { clamp } from "./util.js"
 
 window.addEventListener("keydown", ev => {
   if (ev.code == "Space") {
@@ -8,6 +9,19 @@ window.addEventListener("keydown", ev => {
     state.ui.mode = MouseEditorState.Drag
     ev.preventDefault()
   }
+
+  const isCtrlOrCmd = ev.ctrlKey || ev.metaKey
+  const isZKey = ev.key === "z"
+  const isRKey = ev.key === "r"
+
+  if (isCtrlOrCmd && isZKey) {
+    undo()
+  }
+
+  if (isCtrlOrCmd && isRKey) {
+    // Redo
+  }
+
   return
 })
 
@@ -52,11 +66,15 @@ canvas.addEventListener("mousedown", (ev) => {
 })
 
 canvas.addEventListener("wheel", (ev) => {
+  ev.preventDefault()
   if (ev.deltaY < 0) {
-    state.ui.zoom *= 1.1
+    state.ui.zoomUnits += 4
   } else {
-    state.ui.zoom /= 1.1
+    state.ui.zoomUnits -= 4
   }
+
+  state.ui.zoomUnits = clamp(state.ui.zoomUnits, 4, 128)
+  state.ui.zoom = state.ui.zoomUnits / CHUNK_SIZE
 
   requestRedraw({ world: true, overlay: true })
 })
@@ -90,8 +108,8 @@ canvas.addEventListener("mousemove", (ev) => {
   const deltaX = ev.clientX - state.ui.lastMouseX
   const deltaY = ev.clientY - state.ui.lastMouseY
 
-  state.ui.camera.x -= deltaX
-  state.ui.camera.y -= deltaY
+  state.ui.camera.x -= deltaX / zoom
+  state.ui.camera.y -= deltaY / zoom
 
   requestRedraw({ overlay: true, world: true })
 

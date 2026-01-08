@@ -16,6 +16,9 @@ export const CHUNK_SIZE = 16
 export function newState() {
   let freshState = {
     version: 1,
+
+    // This is The Source Of Truth 
+    // Don't Get mIxed
     world: {
       seed1: null,
       seed2: null,
@@ -47,13 +50,21 @@ export function newState() {
         x: 0,
         y: 0,
       },
-      zoom: 1 // One Mean Original Position
+      zoom: 1,
+      zoomUnits: CHUNK_SIZE,
+      undoCmd: [],
+      redoCmd: [],
     },
+    // this is just cache, it disposable
     view: {
       chunkOrders: new Map(),
       dirty: false,
       map: [],
     },
+    /**
+     * @type Map<string, Map<index, any>>
+     */
+    affectedChunks: new Map()
   }
 
   const { perm, seed1, seed2, seed3, seed4 } = setupGenerator()
@@ -68,6 +79,8 @@ export function newState() {
 }
 
 export let state = newState()
+export let undoEntry = []
+export let redoEntry = []
 
 export function setupGenerator() {
   const genSeed = () => (Math.random() * 2 ** 32) >> 0
