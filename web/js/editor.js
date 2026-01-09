@@ -1,13 +1,13 @@
-import { requestRedraw, undo } from "./canvas.js"
+import { redo, requestRedraw, undo } from "./canvas.js"
 import { state, canvas, CHUNK_SIZE } from "./state.js"
 import { MouseEditorState } from "./state_option.js"
 import { clamp } from "./util.js"
 
 window.addEventListener("keydown", ev => {
+  ev.preventDefault()
   if (ev.code == "Space") {
     state.ui.space = true
     state.ui.mode = MouseEditorState.Drag
-    ev.preventDefault()
   }
 
   const isCtrlOrCmd = ev.ctrlKey || ev.metaKey
@@ -19,7 +19,7 @@ window.addEventListener("keydown", ev => {
   }
 
   if (isCtrlOrCmd && isRKey) {
-    // Redo
+    redo()
   }
 
   return

@@ -1,4 +1,4 @@
-import { state, canvas, overlay, CHUNK_SIZE, undoEntry, redoEntry } from "./state.js"
+import { state, canvas, overlay, CHUNK_SIZE, undoEntry, redoEntry, clearRedo } from "./state.js"
 import { FractalNoise } from "./noise.js"
 import { clamp } from "./util.js"
 import { MouseEditorState } from "./state_option.js"
@@ -32,7 +32,7 @@ export function drawMap() {
   state.view.dirty = true
 
   for (const [coordinate, worldChunk] of state.world.chunks.entries()) {
-    if (!worldChunk.dirty) return
+    if (!worldChunk.dirty) continue
 
     const imageData = ctx.createImageData(CHUNK_SIZE, CHUNK_SIZE)
     let idxData = 0;
@@ -55,14 +55,12 @@ export function drawMap() {
         imageData.data[idxData++] = 255
       }
     }
-
     let viewChunk = state.view.chunkOrders.get(coordinate)
     if (!viewChunk) {
       const offscreen = new OffscreenCanvas(CHUNK_SIZE, CHUNK_SIZE)
       viewChunk = { offscreen, dirty: false }
       state.view.chunkOrders.set(coordinate, viewChunk)
     }
-
     const context = viewChunk.offscreen.getContext("2d")
     context.imageSmoothingEnabled = false
     context.putImageData(imageData, 0, 0)
@@ -72,6 +70,8 @@ export function drawMap() {
 
   undoEntry.push(structuredClone(state.affectedChunks))
   state.affectedChunks.clear()
+
+  clearRedo()
   requestRedraw({ world: true, overlay: true })
 }
 
@@ -137,7 +137,9 @@ function writeToChunk(worldX, worldY, noise) {
   if (!localChunk) {
     const change = {
       before: prevChunk,
-      after: currentChunk
+      beforeOccupied: 0,
+      after: currentChunk,
+      afterOccupied: 1,
     }
 
     affectedChunk.set(index, change)
@@ -169,13 +171,13 @@ function drawWorld() {
     const worldY = chunk.cy * CHUNK_SIZE
 
     let chunkView = state.view.chunkOrders.get(coordinate)
-
     if (chunkView && chunkView.dirty == false) {
       ctx.drawImage(chunkView.offscreen, worldX, worldY)
       continue
     }
 
     if (!chunkView) {
+      // console.count("NO CHUNK")
       const offscreen = new OffscreenCanvas(CHUNK_SIZE, CHUNK_SIZE)
       chunkView = { offscreen, dirty: false }
       state.view.chunkOrders.set(coordinate, chunkView)
@@ -203,6 +205,7 @@ function drawWorld() {
       pixels[index++] = 255
     }
 
+    offCtx.putImageData(imageData, 0, 0)
     ctx.drawImage(chunkView.offscreen, worldX, worldY)
 
     chunkView.dirty = false
@@ -226,7 +229,7 @@ function drawOverlay() {
     const x1 = (state.ui.x1)
     const y1 = (state.ui.y1)
 
-    overlayCtx.strokeStyle = "rgba(0,0,255,0.8)"
+    overlayCtx.strokeStyle = "rgba(0,0,255,0.6)"
     overlayCtx.strokeRect(x0, y0, x1 - x0, y1 - y0)
   }
 }
@@ -301,7 +304,6 @@ export function undo() {
   if (!affectedChunks) {
     return
   }
-  // console.log(affectedChunks)
   for (const [coordinate, localChunks] of affectedChunks.entries()) {
     const [cx, cy] = coordinate.split(",")
     const chunkKey = cx + "," + cy;
@@ -309,11 +311,36 @@ export function undo() {
     console.assert(chunk != null, "Something Wrong With Chunk Source of Truth")
 
     for (const [index, change] of localChunks.entries()) {
-      const prevChunk = change.before
+      const pixel = change.before
 
-      console.assert(chunk.occupied[index] != 0, "Something Wrong With Local Chunk Source Of Truth")
+      chunk.data[index] = pixel
+      chunk.occupied[index] = change.beforeOccupied
+    }
 
-      chunk.data[index] = prevChunk
+    let cacheView = state.view.chunkOrders.get(chunkKey)
+    console.assert(chunk != null, "Something Wrong With Chunk View Cache")
+    cacheView.dirty = true
+
+  }
+  redoEntry.push(affectedChunks)
+  requestRedraw({ world: true })
+}
+
+export function redo() {
+  const affectedChunks = redoEntry.pop()
+  if (!affectedChunks) return
+
+  for (const [coordinate, localChunks] of affectedChunks.entries()) {
+    const [cx, cy] = coordinate.split(",")
+    const chunkKey = cx + "," + cy;
+    const chunk = state.world.chunks.get(chunkKey)
+    console.assert(chunk != null, "Something Wrong With Chunk Source of Truth")
+
+    for (const [index, change] of localChunks.entries()) {
+      const pixel = change.after
+
+      chunk.data[index] = pixel
+      chunk.occupied[index] = change.afterOccupied
     }
 
     const cacheView = state.view.chunkOrders.get(chunkKey)
@@ -321,7 +348,6 @@ export function undo() {
 
     cacheView.dirty = true
   }
-
-  redoEntry.push(affectedChunks)
+  undoEntry.push(affectedChunks)
   requestRedraw({ world: true })
 }

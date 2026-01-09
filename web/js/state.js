@@ -82,6 +82,10 @@ export let state = newState()
 export let undoEntry = []
 export let redoEntry = []
 
+export function clearRedo() {
+  redoEntry = []
+}
+
 export function setupGenerator() {
   const genSeed = () => (Math.random() * 2 ** 32) >> 0
 
