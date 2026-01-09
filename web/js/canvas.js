@@ -125,7 +125,9 @@ function writeToChunk(worldX, worldY, noise) {
   const index = Math.floor(ly * CHUNK_SIZE + lx)
 
   const prevChunk = chunk.data[index]
+  const prevChunkStatus = chunk.occupied[index]
   const currentChunk = noise
+  const currChunkStatus = 1
 
   let affectedChunk = state.affectedChunks.get(key)
   if (!affectedChunk) {
@@ -137,9 +139,9 @@ function writeToChunk(worldX, worldY, noise) {
   if (!localChunk) {
     const change = {
       before: prevChunk,
-      beforeOccupied: 0,
+      beforeOccupied: prevChunkStatus,
       after: currentChunk,
-      afterOccupied: 1,
+      afterOccupied: currChunkStatus,
     }
 
     affectedChunk.set(index, change)
@@ -147,7 +149,7 @@ function writeToChunk(worldX, worldY, noise) {
 
   chunk.data[index] = currentChunk
   chunk.dirty = true
-  chunk.occupied[index] = 1
+  chunk.occupied[index] = currChunkStatus
 }
 
 function drawWorld() {
