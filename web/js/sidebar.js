@@ -3,10 +3,10 @@ import { debounce } from "./util.js"
 import { state } from "./state.js"
 import { MouseEditorState } from "./state_option.js"
 
-document.getElementById("select-drag").addEventListener("click", _ => {
-  const button = document.getElementById("select-drag")
-  if (state.ui.mode != MouseEditorState.SelectDrag) {
-    state.ui.mode = MouseEditorState.SelectDrag
+document.getElementById("rectangle-tool").addEventListener("click", _ => {
+  const button = document.getElementById("rectangle-tool")
+  if (state.ui.mode != MouseEditorState.RectangleTool) {
+    state.ui.mode = MouseEditorState.RectangleTool
     button.style.border = "2px solid blue"
     return
   }

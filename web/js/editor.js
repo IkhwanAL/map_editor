@@ -58,7 +58,7 @@ canvas.addEventListener("mousedown", (ev) => {
   const canvasX = ev.clientX - canvasPosition.left
   const canvasY = ev.clientY - canvasPosition.top
 
-  if (state.ui.mode == MouseEditorState.SelectDrag) {
+  if (state.ui.mode == MouseEditorState.RectangleTool) {
     state.ui.x0 = canvasX / zoom + cam.x
     state.ui.y0 = canvasY / zoom + cam.y
   }
@@ -93,7 +93,7 @@ canvas.addEventListener("mousemove", (ev) => {
   const zoom = state.ui.zoom
 
   const canvasPosition = canvas.getBoundingClientRect()
-  if (state.ui.mode == MouseEditorState.SelectDrag) {
+  if (state.ui.mode == MouseEditorState.RectangleTool) {
 
     const canvasX = ev.clientX - canvasPosition.left
     const canvasY = ev.clientY - canvasPosition.top

@@ -1,22 +1,27 @@
 package ui
 
+templ ScriptImport() {
+	<script type="module" src="js/editor.js"></script>
+	<script type="module" src="js/sidebar.js"></script>
+	<script type="module" src="js/topbar.js"></script>
+	<script type="module" src="js/state.js"></script>
+	<script type="module" src="js/canvas.js"></script>
+	<script type="module" src="js/random.js"></script>
+	<script type="module" src="js/noise.js"></script>
+	<script type="module" src="js/util.js"></script>
+	<script type="module" src="js/scale.js"></script>
+	<script type="module" src="js/pixel.js"></script>
+	<script type="module" src="js/state_option.js"></script>
+	<script type="module" src="js/dist/component.js"></script>
+}
+
 templ MainPage() {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<script type="module" src="js/editor.js"></script>
-			<script type="module" src="js/sidebar.js"></script>
-			<script type="module" src="js/topbar.js"></script>
-			<script type="module" src="js/state.js"></script>
-			<script type="module" src="js/canvas.js"></script>
-			<script type="module" src="js/random.js"></script>
-			<script type="module" src="js/noise.js"></script>
-			<script type="module" src="js/util.js"></script>
-			<script type="module" src="js/scale.js"></script>
-			<script type="module" src="js/pixel.js"></script>
-			<script type="module" src="js/state_option.js"></script>
+			@ScriptImport()
 			<link rel="stylesheet" href="css/index.css"/>
 			<link rel="stylesheet" href="css/editor.css"/>
 			<link rel="stylesheet" href="css/modal.css"/>

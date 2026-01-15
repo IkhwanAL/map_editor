@@ -23,9 +23,3 @@ Well... The project is tough but fun and joy for me, it's challenge my current u
 ## Current Work
 
 Time To add The Paint Or Brush Function
-
-## Thing To Refactor |Priority Right Now|
-
-- The Draw Function
-- The Calculation To Detect World Coordinate, Chunk Coordinate, Local Chunk Coordinate
-- A Function To Create new Cache

@@ -3,16 +3,10 @@ package ui
 templ SidebarPage() {
 	<div class="sidebar-area">
 		<div class="tools">
-			<button class="tool" id="select-drag">Select</button>
+			<button class="tool" id="rectangle-tool">Select</button>
 		</div>
 		@Generator()
-		@LayerBar()
-	</div>
-}
-
-templ LayerBar() {
-	<div>
-		<h3>Layer</h3>
+		<rectangle-tools></rectangle-tools>
 	</div>
 }
 
