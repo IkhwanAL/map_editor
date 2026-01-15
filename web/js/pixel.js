@@ -1,3 +1,4 @@
+import { CHUNK_SIZE } from "./state";
 import { clamp } from "./util";
 
 export function updatePixels(chunk, pixels) {
@@ -35,3 +36,16 @@ export function createPixels(chunk, pixels) {
     pixels[rgbIdx++] = 255
   }
 }
+
+export function getChunkCoordinate(worldCoordinate) {
+  return Math.floor(worldCoordinate / CHUNK_SIZE)
+}
+
+export function getWorldCoordinate(chunkCoordinate) {
+  return Math.floor(chunkCoordinate * CHUNK_SIZE)
+}
+
+export function getLocalChunkCoordinate(worldCoordinate, chunkCoordinate) {
+  return Math.floor(worldCoordinate - chunkCoordinate * CHUNK_SIZE)
+}
+

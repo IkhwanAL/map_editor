@@ -1,8 +1,7 @@
 import { state, canvas, overlay, CHUNK_SIZE, undoEntry, redoEntry, clearRedo } from "./state.js"
 import { FractalNoise } from "./noise.js"
-import { clamp } from "./util.js"
 import { MouseEditorState } from "./state_option.js"
-import { createPixels, updatePixels } from "./pixel.js"
+import { createPixels, getChunkCoordinate, getLocalChunkCoordinate, getWorldCoordinate, updatePixels } from "./pixel.js"
 
 const ctx = canvas.getContext("2d")
 ctx.imageSmoothingEnabled = false
@@ -91,8 +90,8 @@ export function mapGenerator(option) {
 }
 
 function writeToChunk(worldX, worldY, noise) {
-  const cx = Math.floor(worldX / CHUNK_SIZE)
-  const cy = Math.floor(worldY / CHUNK_SIZE)
+  const cx = getChunkCoordinate(worldX)
+  const cy = getChunkCoordinate(worldY)
 
   const key = cx + "," + cy
   let chunk = state.world.chunks.get(key)
@@ -103,8 +102,8 @@ function writeToChunk(worldX, worldY, noise) {
     state.world.chunks.set(key, chunk)
   }
 
-  const lx = Math.floor(worldX - cx * CHUNK_SIZE)
-  const ly = Math.floor(worldY - cy * CHUNK_SIZE)
+  const lx = getLocalChunkCoordinate(worldX, cx)
+  const ly = getLocalChunkCoordinate(worldY, cy)
   const index = Math.floor(ly * CHUNK_SIZE + lx)
 
   const prevChunk = chunk.data[index]
@@ -152,8 +151,8 @@ function drawWorld() {
   ctx.setTransform(zoom, 0, 0, zoom, tx, ty)
 
   for (const [coordinate, chunk] of state.world.chunks.entries()) {
-    const worldX = chunk.cx * CHUNK_SIZE
-    const worldY = chunk.cy * CHUNK_SIZE
+    const worldX = getWorldCoordinate(chunk.cx)
+    const worldY = getWorldCoordinate(chunk.cy)
 
     let chunkView = state.view.chunkOrders.get(coordinate)
     if (chunkView && chunkView.dirty == false) {
@@ -162,7 +161,6 @@ function drawWorld() {
     }
 
     if (!chunkView) {
-      // console.count("NO CHUNK")
       const offscreen = new OffscreenCanvas(CHUNK_SIZE, CHUNK_SIZE)
       chunkView = { offscreen, dirty: false }
       state.view.chunkOrders.set(coordinate, chunkView)
