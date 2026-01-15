@@ -1,5 +1,5 @@
-import { CHUNK_SIZE } from "./state";
-import { clamp } from "./util";
+import { CHUNK_SIZE } from "./state.js";
+import { clamp } from "./util.js";
 
 export function updatePixels(chunk, pixels) {
   let index = 0
