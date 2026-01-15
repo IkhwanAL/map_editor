@@ -2,6 +2,7 @@ import { state, canvas, overlay, CHUNK_SIZE, undoEntry, redoEntry, clearRedo } f
 import { FractalNoise } from "./noise.js"
 import { clamp } from "./util.js"
 import { MouseEditorState } from "./state_option.js"
+import { createPixels, updatePixels } from "./pixel.js"
 
 const ctx = canvas.getContext("2d")
 ctx.imageSmoothingEnabled = false
@@ -35,26 +36,8 @@ export function drawMap() {
     if (!worldChunk.dirty) continue
 
     const imageData = ctx.createImageData(CHUNK_SIZE, CHUNK_SIZE)
-    let idxData = 0;
+    createPixels(worldChunk, imageData.data)
 
-    for (let ly = 0; ly < CHUNK_SIZE; ly++) {
-      for (let lx = 0; lx < CHUNK_SIZE; lx++) {
-        const index = ly * CHUNK_SIZE + lx
-        let value = worldChunk.data[index]
-        const occupied = worldChunk.occupied[index]
-
-        value = (value + 1) * 0.5
-        value = clamp(value * 255 | 0, 0, 255)
-        if (occupied == 0) {
-          value = 255
-        }
-
-        imageData.data[idxData++] = value
-        imageData.data[idxData++] = value
-        imageData.data[idxData++] = value
-        imageData.data[idxData++] = 255
-      }
-    }
     let viewChunk = state.view.chunkOrders.get(coordinate)
     if (!viewChunk) {
       const offscreen = new OffscreenCanvas(CHUNK_SIZE, CHUNK_SIZE)
@@ -190,22 +173,7 @@ function drawWorld() {
     offCtx.clearRect(0, 0, CHUNK_SIZE, CHUNK_SIZE)
 
     const imageData = offCtx.getImageData(0, 0, CHUNK_SIZE, CHUNK_SIZE)
-    let pixels = imageData.data
-
-    let index = 0
-    for (let i = 0; i < chunk.data.length; i++) {
-      let data = chunk.data[i];
-      const occupied = chunk.occupied[i]
-
-      data = (data + 1) * 0.5
-      let value = clamp(data * 255 | 0, 0, 255)
-      if (occupied == 0) value = 255
-
-      pixels[index++] = value
-      pixels[index++] = value
-      pixels[index++] = value
-      pixels[index++] = 255
-    }
+    updatePixels(chunk, imageData.data)
 
     offCtx.putImageData(imageData, 0, 0)
     ctx.drawImage(chunkView.offscreen, worldX, worldY)
@@ -264,23 +232,7 @@ export function loadViewStateFromSavedState(newState) {
   const chunkOrders = new Map()
   for (const chunk of worldState.chunks.values()) {
     const pixels = new Uint8ClampedArray(CHUNK_SIZE * CHUNK_SIZE * 4)
-
-    let index = 0
-    for (let i = 0; i < chunk.data.length; i++) {
-      let data = chunk.data[i];
-      const occupied = chunk.occupied[i]
-
-      data = (data + 1) * 0.5
-      let value = clamp(data * 255 | 0, 0, 255)
-      if (occupied == 0) {
-        value = 255
-      }
-
-      pixels[index++] = value
-      pixels[index++] = value
-      pixels[index++] = value
-      pixels[index++] = 255
-    }
+    updatePixels(chunk, pixels)
 
     const imageData = new ImageData(pixels, CHUNK_SIZE, CHUNK_SIZE)
     const offscreen = new OffscreenCanvas(CHUNK_SIZE, CHUNK_SIZE)
@@ -310,7 +262,7 @@ export function undo() {
     const [cx, cy] = coordinate.split(",")
     const chunkKey = cx + "," + cy;
     const chunk = state.world.chunks.get(chunkKey)
-    console.assert(chunk != null, "Something Wrong With Chunk Source of Truth")
+    console.assert(chunk != null, "Something Wrong With Chunk Source of Truth [Undo]")
 
     for (const [index, change] of localChunks.entries()) {
       const pixel = change.before
@@ -320,7 +272,7 @@ export function undo() {
     }
 
     let cacheView = state.view.chunkOrders.get(chunkKey)
-    console.assert(chunk != null, "Something Wrong With Chunk View Cache")
+    console.assert(chunk != null, "Something Wrong With Chunk View Cache [Undo]")
     cacheView.dirty = true
 
   }
@@ -336,7 +288,7 @@ export function redo() {
     const [cx, cy] = coordinate.split(",")
     const chunkKey = cx + "," + cy;
     const chunk = state.world.chunks.get(chunkKey)
-    console.assert(chunk != null, "Something Wrong With Chunk Source of Truth")
+    console.assert(chunk != null, "Something Wrong With Chunk Source of Truth [Redo]")
 
     for (const [index, change] of localChunks.entries()) {
       const pixel = change.after
@@ -346,7 +298,7 @@ export function redo() {
     }
 
     const cacheView = state.view.chunkOrders.get(chunkKey)
-    console.assert(chunk != null, "Something Wrong With Chunk View Cache")
+    console.assert(chunk != null, "Something Wrong With Chunk View Cache [Redo]")
 
     cacheView.dirty = true
   }
