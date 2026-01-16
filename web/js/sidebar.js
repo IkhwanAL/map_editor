@@ -1,54 +1,41 @@
 import { mapGenerator, drawMap } from "./canvas.js"
-import { debounce } from "./util.js"
 import { state } from "./state.js"
-import { MouseEditorState } from "./state_option.js"
+import { MouseEditorState, ToolState } from "./state_option.js"
 
-document.getElementById("rectangle-tool").addEventListener("click", _ => {
-  const button = document.getElementById("rectangle-tool")
-  if (state.ui.mode != MouseEditorState.RectangleTool) {
-    state.ui.mode = MouseEditorState.RectangleTool
-    button.style.border = "2px solid blue"
-    return
+document.addEventListener("drawMap", e => {
+  let { generator } = state.world
+  Object.assign(generator, e.detail)
+  mapGenerator(generator)
+  drawMap()
+})
+
+document.getElementById("toolbar").addEventListener("click", (e) => {
+  e.preventDefault()
+
+  let tool = e.target.dataset.tool;
+  if (!tool || tool == state.ui.tool) {
+    tool = ToolState.None
   }
 
-  // return old state
-  state.ui.mode = MouseEditorState.Idle
-  button.style.border = "2px solid black"
+  state.ui.tool = tool
+  render()
 })
 
-document.getElementById("generateMap").addEventListener("click", () => {
-  let { generator } = state.world
-  document.querySelectorAll(".generator .form-input input[type=range]").forEach(input => {
-    const key = input.dataset.key
-    const value = parseFloat(input.value)
-    generator[key] = value
-  })
+const tools = {
+  "rectangle": document.getElementById("rectangle-tool"),
+  "brush": document.getElementById("brush-tool")
+}
 
-  mapGenerator(generator)
-  drawMap()
-})
+function render() {
+  for (const [name, el] of Object.entries(tools)) {
+    el.hidden = state.ui.tool !== name
+  }
 
-const inputGenerator = document.querySelectorAll(".generator .form-input input")
+  if (state.ui.tool === ToolState.None) {
+    state.ui.mode = MouseEditorState.Idle
+  } else {
+    state.ui.mode = MouseEditorState.Drawing
+  }
 
-const inputControl = debounce(ev => {
-
-  const source = ev.target
-  const wrapper = source.closest(".form-input")
-  const value = parseFloat(source.value)
-  const key = source.dataset.key
-
-  wrapper.querySelectorAll("input").forEach(el => {
-    if (el !== source) el.value = value
-  })
-
-  let { generator } = state.world
-
-  generator[key] = value
-  mapGenerator(generator)
-  drawMap()
-}, 500)
-
-inputGenerator.forEach(input => {
-  input.addEventListener("input", inputControl)
-})
-
+  console.log(state.ui.mode, state.ui.tool)
+}
