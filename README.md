@@ -19,13 +19,8 @@ Well... The project is tough but fun and joy for me, it's challenge my current u
   - Or other editor function
 - An Undo / Redo Cmd |Done|
 - Some Edge Case that i don't know
+- Add Lit Component
 
 ## Current Work
 
 Time To add The Paint Or Brush Function
-
-## Thing To Refactor |Priority Right Now|
-
-- The Draw Function
-- The Calculation To Detect World Coordinate, Chunk Coordinate, Local Chunk Coordinate
-- A Function To Create new Cache

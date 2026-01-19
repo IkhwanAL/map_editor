@@ -7,13 +7,13 @@ else
 	BIN_NAME = $(APP_NAME)
 endif
 
-run:
+run: generate
 	@echo "🏃 Running $(APP_NAME) with race detection..."
-	templ generate
 	go run -race main.go
 
 generate:
-	@echo "🧩 Generating templ + tailwind..."
+	@echo "🧩 Generating templ + lit"
+	cd components && npx vite build
 	templ generate
 
 tests:
@@ -27,7 +27,6 @@ lint:
 fmt:
 	go fmt $(PKG)
 
-build:
+build: generate
 	@echo "Im Building A Go Binary"
-	templ generate
 	go build -race -o bin/$(BIN_NAME) main.go

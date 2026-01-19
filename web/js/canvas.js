@@ -25,7 +25,7 @@ function getActualCanvasSize() {
 getActualCanvasSize()
 
 export function drawMap() {
-  if (state.ui.mode != MouseEditorState.SelectDrag) {
+  if (state.ui.mode != MouseEditorState.Drawing) {
     return
   }
 
@@ -58,7 +58,7 @@ export function drawMap() {
 }
 
 export function mapGenerator(option) {
-  if (state.ui.mode != MouseEditorState.SelectDrag) return
+  if (state.ui.mode != MouseEditorState.Drawing) return
 
   const { permutationTable } = state.world
 
@@ -190,7 +190,7 @@ function drawOverlay() {
   overlayCtx.translate(-cam.x * zoom, -cam.y * zoom)
   overlayCtx.scale(zoom, zoom)
 
-  if (state.ui.mode == MouseEditorState.SelectDrag) {
+  if (state.ui.mode == MouseEditorState.Drawing) {
     const x0 = (state.ui.x0)
     const y0 = (state.ui.y0)
 

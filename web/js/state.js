@@ -30,7 +30,6 @@ export function newState() {
         persistence: null,
         lacunarity: null,
         frequency: null,
-        amplitude: null
       },
       chunks: new Map()
     },
@@ -54,6 +53,7 @@ export function newState() {
       zoomUnits: CHUNK_SIZE,
       undoCmd: [],
       redoCmd: [],
+      tool: null
     },
     // this is just cache, it disposable
     view: {

@@ -108,7 +108,8 @@ export function FractalNoise(x, y, PERM, option = defaultFractalOption) {
   let maxValue = 0.0
 
   const { lacunarity, octaves, persistence, canvasWidth, canvasHeight, ...options } = option
-  let { frequency, amplitude } = options
+  let { frequency } = options
+  let amplitude = 2.0
 
   for (let i = 0; i < octaves; i++) {
     const n = amplitude * perlinNoise(x * frequency, y * frequency, PERM)
