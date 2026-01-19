@@ -580,4 +580,4 @@ class Ut extends S {
   `;
   }
 }
-customElements.define("rectangle-tool", Ut);
+customElements.define("draw-map-tool", Ut);

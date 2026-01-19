@@ -29,7 +29,7 @@ func SidebarPage() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"sidebar-area\"><div class=\"tools\" id=\"toolbar\"><button class=\"tool\" id=\"rectangle\" data-tool=\"rectangle\">Rectangle Tools</button> <button class=\"tool\" id=\"brush\" data-tool=\"brush\">Brush Tools</button></div><div class=\"tool-config\"><div id=\"rectangle-tool\" hidden><rectangle-tool></rectangle-tool></div><div id=\"brush-tool\" hidden></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"sidebar-area\"><div class=\"tools\" id=\"toolbar\"><button class=\"tool\" id=\"draw-map\" data-tool=\"draw-map\">Draw Map Tool</button> <button class=\"tool\" id=\"brush\" data-tool=\"brush\">Brush Tools</button></div><div class=\"tool-config\"><div id=\"draw-map-tool\" hidden data-button=\"draw-map\"><draw-map-tool></draw-map-tool></div><div id=\"brush-tool\" hidden data-button=\"brush\"></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

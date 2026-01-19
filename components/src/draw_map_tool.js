@@ -26,7 +26,7 @@ class DrawMapTool extends LitElement {
       width: max-content;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 2px;
     }
 
     .form-input input[type="range"] {
@@ -37,7 +37,7 @@ class DrawMapTool extends LitElement {
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: 8px;
+      gap: 2px;
     }
   `
 

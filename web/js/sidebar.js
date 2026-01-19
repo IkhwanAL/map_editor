@@ -22,14 +22,24 @@ document.getElementById("toolbar").addEventListener("click", (e) => {
 })
 
 const tools = {
-  "rectangle": document.getElementById("rectangle-tool"),
+  "draw-map": document.getElementById("draw-map-tool"),
   "brush": document.getElementById("brush-tool")
 }
 
 function render() {
   for (const [name, el] of Object.entries(tools)) {
-    el.hidden = state.ui.tool !== name
+    const idButton = el.dataset.button
+    const elButton = document.getElementById(idButton)
+
+    if (state.ui.tool == name) {
+      el.hidden = false
+      elButton.style.border = "2px solid blue"
+    } else {
+      el.hidden = true
+      elButton.style.border = "2px solid black"
+    }
   }
+
 
   if (state.ui.tool === ToolState.None) {
     state.ui.mode = MouseEditorState.Idle
@@ -37,5 +47,4 @@ function render() {
     state.ui.mode = MouseEditorState.Drawing
   }
 
-  console.log(state.ui.mode, state.ui.tool)
 }

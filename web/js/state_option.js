@@ -6,5 +6,5 @@ export const MouseEditorState = Object.freeze({
 
 export const ToolState = Object.freeze({
   None: null,
-  Rectangle: "rectangle"
+  DrawMapTool: "draw-map-tool"
 })
