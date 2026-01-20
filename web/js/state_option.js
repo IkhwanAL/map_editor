@@ -1,10 +1,10 @@
 export const MouseEditorState = Object.freeze({
   Idle: "idle",
-  Drag: "dragging",
-  Drawing: "drawing"
+  Dragging: "dragging",
+  UsingTool: "using-tool"
 })
 
 export const ToolState = Object.freeze({
   None: null,
-  DrawMapTool: "draw-map-tool"
+  BrushTool: "brush-tool"
 })

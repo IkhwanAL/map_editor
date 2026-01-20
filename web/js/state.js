@@ -24,6 +24,8 @@ export function newState() {
       seed2: null,
       seed3: null,
       seed4: null,
+      x: 0,
+      y: 0,
       permutationTable: [],
       generator: {
         octaves: null,
@@ -36,13 +38,8 @@ export function newState() {
     ui: {
       width: 0,
       height: 0,
-      isDragging: false,
       space: false,
       mode: MouseEditorState.Idle,
-      x0: 0,
-      y0: 0,
-      x1: 0,
-      y1: 0,
       lastMouseX: 0,
       lastMouseY: 0,
       camera: {
@@ -53,7 +50,9 @@ export function newState() {
       zoomUnits: CHUNK_SIZE,
       undoCmd: [],
       redoCmd: [],
-      tool: null
+      tool: null,
+      mouseDown: false,
+      brush: {}
     },
     // this is just cache, it disposable
     view: {

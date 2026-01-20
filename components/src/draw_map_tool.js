@@ -3,10 +3,10 @@ import { debounce } from "./util.js"
 
 class DrawMapTool extends LitElement {
   static properties = {
-    octaves: 1,
-    persistence: 0.5,
-    lacunarity: 2.0,
-    frequency: 0.1
+    octaves: { type: Number },
+    persistence: { type: Number },
+    lacunarity: { type: Number },
+    frequency: { type: Number }
   }
 
   constructor() {
@@ -63,7 +63,7 @@ class DrawMapTool extends LitElement {
   render() {
     return html`
     <div class="generator">
-      <button @click=${this.generateMap}>Generate Map</button>
+      <!-- <button @click=${this.generateMap}>Generate Map</button> -->
       <div class="form-input">
         <label>Octaves</label>
         <input type="range" min="1" max="10" step="1" .value=${this.octaves} @input=${this.changeInput("octaves")}/>

@@ -1,13 +1,13 @@
-import { redo, requestRedraw, undo } from "./canvas.js"
+import { applyTool, redo, requestRedraw, undo } from "./canvas.js"
 import { state, canvas, CHUNK_SIZE } from "./state.js"
 import { MouseEditorState } from "./state_option.js"
 import { clamp } from "./util.js"
 
 window.addEventListener("keydown", ev => {
   ev.preventDefault()
-  if (ev.code == "Space") {
+  if (ev.code == "Space" && state.ui.mode == MouseEditorState.Idle) {
     state.ui.space = true
-    state.ui.mode = MouseEditorState.Drag
+    state.ui.mode = MouseEditorState.Dragging
   }
 
   const isCtrlOrCmd = ev.ctrlKey || ev.metaKey
@@ -26,43 +26,17 @@ window.addEventListener("keydown", ev => {
 })
 
 window.addEventListener("keyup", ev => {
-  if (ev.code == "Space") {
+  ev.preventDefault()
+  if (ev.code == "Space" && state.ui.mode == MouseEditorState.Dragging) {
     state.ui.space = false
     state.ui.mode = MouseEditorState.Idle
-    ev.preventDefault()
   }
   return
 })
 
-canvas.addEventListener("mouseup", () => { state.ui.mode == MouseEditorState.Idle; state.ui.isDragging = false })
-canvas.addEventListener("mouseleave", () => { state.ui.mode == MouseEditorState.Idle; state.ui.isDragging = false })
-
-canvas.addEventListener("mousedown", (ev) => {
-  if (state.ui.mode == MouseEditorState.Idle) return
-
-  if (state.ui.mode == MouseEditorState.Drag) {
-    if (!state.ui.space) {
-      return
-    }
-  }
-
-  const canvasPosition = canvas.getBoundingClientRect()
-
-  const zoom = state.ui.zoom
-  const cam = state.ui.camera
-
-  state.ui.isDragging = true
-  state.ui.lastMouseX = ev.clientX
-  state.ui.lastMouseY = ev.clientY
-
-  const canvasX = ev.clientX - canvasPosition.left
-  const canvasY = ev.clientY - canvasPosition.top
-
-  if (state.ui.mode == MouseEditorState.Drawing) {
-    state.ui.x0 = canvasX / zoom + cam.x
-    state.ui.y0 = canvasY / zoom + cam.y
-  }
-
+canvas.addEventListener("mouseup", () => {
+  state.ui.mode == MouseEditorState.Idle;
+  state.ui.mouseDown = false;
 })
 
 canvas.addEventListener("wheel", (ev) => {
@@ -79,41 +53,84 @@ canvas.addEventListener("wheel", (ev) => {
   requestRedraw({ world: true, overlay: true })
 })
 
-canvas.addEventListener("mousemove", (ev) => {
-  if (state.ui.mode == MouseEditorState.Idle) return
-  if (!state.ui.isDragging) return
+function shouldHandleMouseMove() {
+  if (state.ui.mode == MouseEditorState.Idle) return false
+  return true
+}
 
-  if (state.ui.mode == MouseEditorState.Drag) {
-    if (!state.ui.space) {
-      return
-    }
-  }
-
-  const cam = state.ui.camera
+function panCamera(state, mouse) {
   const zoom = state.ui.zoom
 
-  const canvasPosition = canvas.getBoundingClientRect()
-  if (state.ui.mode == MouseEditorState.Drawing) {
-
-    const canvasX = ev.clientX - canvasPosition.left
-    const canvasY = ev.clientY - canvasPosition.top
-
-    state.ui.x1 = canvasX / zoom + cam.x
-    state.ui.y1 = canvasY / zoom + cam.y
-
-    requestRedraw({ overlay: true })
-    return
-  }
-
-  const deltaX = ev.clientX - state.ui.lastMouseX
-  const deltaY = ev.clientY - state.ui.lastMouseY
+  const deltaX = mouse.x - state.ui.lastMouseX
+  const deltaY = mouse.y - state.ui.lastMouseY
 
   state.ui.camera.x -= deltaX / zoom
   state.ui.camera.y -= deltaY / zoom
+}
 
-  requestRedraw({ overlay: true, world: true })
+function draw() {
+  const brush = document.querySelector("brush-tool")
+  const configMap = brush.shadowRoot.querySelector("draw-map-tool")
+  const detail = {
+    octaves: configMap.octaves,
+    persistence: configMap.persistence,
+    lacunarity: configMap.lacunarity,
+    frequency: configMap.frequency
+  }
+  document.dispatchEvent(new CustomEvent("drawMap", {
+    detail,
+    composed: true,
+    bubbles: true
+  }))
+}
 
-  state.ui.lastMouseX = ev.clientX
-  state.ui.lastMouseY = ev.clientY
+function handleMovingMouse(state, mouse) {
+  if (state.ui.mode == MouseEditorState.Dragging) {
+    panCamera(state, mouse)
+    requestRedraw({ world: true })
+    return
+  }
+
+  if (state.ui.mode == MouseEditorState.UsingTool) {
+    draw()
+  }
+}
+
+canvas.addEventListener("mousedown", (ev) => {
+  if (state.ui.mode == MouseEditorState.Idle) return
+
+  const rect = canvas.getBoundingClientRect()
+  state.ui.lastMouseX = ev.clientX - rect.left
+  state.ui.lastMouseY = ev.clientY - rect.top
+
+  state.ui.mouseDown = true
+})
+
+canvas.addEventListener("mousemove", (ev) => {
+  if (!shouldHandleMouseMove()) {
+    return
+  }
+
+  const rect = canvas.getBoundingClientRect()
+
+  // Since clientX and clientY is read full screen include sidebar
+  // we need to exclude the sidebar from the position x,y
+  const mouseX = ev.clientX - rect.left
+  const mouseY = ev.clientY - rect.top
+
+  if (state.ui.mode == MouseEditorState.UsingTool) {
+    applyTool(state)
+    requestRedraw({ overlay: true })
+  }
+
+  if (state.ui.mouseDown) handleMovingMouse(state, { x: mouseX, y: mouseY })
+
+  state.ui.lastMouseX = mouseX
+  state.ui.lastMouseY = mouseY
+
+  state.world.x = mouseX / state.ui.zoom + state.ui.camera.x
+  state.world.y = mouseY / state.ui.zoom + state.ui.camera.y
+
+  requestRedraw({ overlay: true })
 })
 

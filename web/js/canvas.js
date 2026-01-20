@@ -1,6 +1,6 @@
 import { state, canvas, overlay, CHUNK_SIZE, undoEntry, redoEntry, clearRedo } from "./state.js"
 import { FractalNoise } from "./noise.js"
-import { MouseEditorState } from "./state_option.js"
+import { ToolState } from "./state_option.js"
 import { createPixels, getChunkCoordinate, getLocalChunkCoordinate, getWorldCoordinate, updatePixels } from "./pixel.js"
 
 const ctx = canvas.getContext("2d")
@@ -25,10 +25,6 @@ function getActualCanvasSize() {
 getActualCanvasSize()
 
 export function drawMap() {
-  if (state.ui.mode != MouseEditorState.Drawing) {
-    return
-  }
-
   state.view.dirty = true
 
   for (const [coordinate, worldChunk] of state.world.chunks.entries()) {
@@ -54,36 +50,34 @@ export function drawMap() {
   state.affectedChunks.clear()
 
   clearRedo()
-  requestRedraw({ world: true, overlay: true })
+  requestRedraw({ world: true })
 }
 
 export function mapGenerator(option) {
-  if (state.ui.mode != MouseEditorState.Drawing) return
-
   const { permutationTable } = state.world
 
-  let worldYMin = Math.min(state.ui.y0, state.ui.y1)
-  let worldYMax = Math.max(state.ui.y0, state.ui.y1)
+  const minX = state.world.x - state.ui.brush.radius
+  const minY = state.world.y - state.ui.brush.radius
 
-  let worldXMin = Math.min(state.ui.x0, state.ui.x1)
-  let worldXMax = Math.max(state.ui.x0, state.ui.x1)
+  const maxX = state.world.x + state.ui.brush.radius
+  const maxY = state.world.y + state.ui.brush.radius
 
-  worldYMax = Math.ceil(worldYMax)
-  worldXMax = Math.ceil(worldXMax)
-
-  worldYMin = Math.floor(worldYMin)
-  worldXMin = Math.floor(worldXMin)
-
-  const height = worldYMax - worldYMin
-  const width = worldXMax - worldXMin
+  const height = maxY - minY
+  const width = maxX - minX
 
   for (let sy = 0; sy < height; sy++) {
     for (let sx = 0; sx < width; sx++) {
-      const worldX = Math.floor(worldXMin + sx)
-      const worldY = Math.floor(worldYMin + sy)
+      const worldX = Math.floor(minX + sx)
+      const worldY = Math.floor(minY + sy)
+
+      const dx = worldX - state.world.x
+      const dy = worldY - state.world.y
+
+      const insideCircle = ((dx * dx) + (dy * dy)) <= (state.ui.brush.radius * state.ui.brush.radius)
+
+      if (!insideCircle) continue
 
       const noise = FractalNoise(worldX, worldY, permutationTable, option)
-
       writeToChunk(worldX, worldY, noise)
     }
   }
@@ -190,15 +184,17 @@ function drawOverlay() {
   overlayCtx.translate(-cam.x * zoom, -cam.y * zoom)
   overlayCtx.scale(zoom, zoom)
 
-  if (state.ui.mode == MouseEditorState.Drawing) {
-    const x0 = (state.ui.x0)
-    const y0 = (state.ui.y0)
-
-    const x1 = (state.ui.x1)
-    const y1 = (state.ui.y1)
-
-    overlayCtx.strokeStyle = "rgba(0,0,255,0.6)"
-    overlayCtx.strokeRect(x0, y0, x1 - x0, y1 - y0)
+  switch (state.ui.tool) {
+    case ToolState.BrushTool:
+      // Create Full Circle Around Mouse
+      const rad = state.ui.brush.radius
+      overlayCtx.beginPath()
+      overlayCtx.strokeStyle = "rgba(0,0,255, 0.6)"
+      overlayCtx.arc(state.world.x, state.world.y, rad, 0, Math.PI * 2, false)
+      overlayCtx.stroke()
+      break;
+    default:
+      break;
   }
 }
 
@@ -302,4 +298,17 @@ export function redo() {
   }
   undoEntry.push(affectedChunks)
   requestRedraw({ world: true })
+}
+
+export function applyTool(state) {
+  const { tool } = state.ui
+
+  switch (tool) {
+    case ToolState.BrushTool:
+      const brush = document.querySelector("brush-tool")
+      state.ui.brush.radius = brush.radius
+      break;
+    default:
+      break;
+  }
 }
