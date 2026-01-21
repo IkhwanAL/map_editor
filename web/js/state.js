@@ -35,6 +35,7 @@ export function newState() {
       chunks: new Map()
     },
     ui: {
+      toCommitChunk: new Map(),
       previewChunks: new Map(),
       width: 0,
       height: 0,

@@ -1,7 +1,7 @@
 import { state, canvas, overlay, tool, CHUNK_SIZE, undoEntry, redoEntry } from "./state.js"
 import { FractalNoise } from "./noise.js"
 import { ToolState } from "./state_option.js"
-import { getChunkCoordinate, getWorldCoordinate, updatePixels } from "./pixel.js"
+import { getChunkCoordinate, getLocalChunkCoordinate, getWorldCoordinate, updatePixels } from "./pixel.js"
 import { clamp } from "./util.js"
 
 const ctx = canvas.getContext("2d")
@@ -63,29 +63,42 @@ export function computeMap(option) {
 }
 
 function storeChunk(worldX, worldY, noise) {
-  const preview = `${worldX},${worldY}`
-
   const cx = getChunkCoordinate(worldX)
   const cy = getChunkCoordinate(worldY)
   const key = cx + "," + cy
 
-  let chunk = state.ui.previewChunks.get(key)
-  if (!chunk) {
+  let viewChunk = state.ui.previewChunks.get(key)
+  if (!viewChunk) {
     const cvs = new OffscreenCanvas(CHUNK_SIZE, CHUNK_SIZE)
     const ctx = cvs.getContext("2d")
     ctx.clearRect(0, 0, CHUNK_SIZE, CHUNK_SIZE)
 
-    chunk = { cvs, ctx }
-    state.ui.previewChunks.set(key, chunk)
+    viewChunk = { cvs, ctx }
+    state.ui.previewChunks.set(key, viewChunk)
   }
 
-  const localX = worldX & (CHUNK_SIZE - 1)
-  const localY = worldY & (CHUNK_SIZE - 1)
+  const localX = getLocalChunkCoordinate(worldX, cx)
+  const localY = getLocalChunkCoordinate(worldY, cy)
 
   const v = clamp(((noise + 1) * 127.5) | 0, 0, 255)
 
-  chunk.ctx.fillStyle = `rgb(${v},${v},${v})`
-  chunk.ctx.fillRect(localX, localY, 1, 1)
+  viewChunk.ctx.fillStyle = `rgb(${v},${v},${v})`
+  viewChunk.ctx.fillRect(localX, localY, 1, 1)
+
+  let chunk = state.ui.toCommitChunk.get(key)
+  if (!chunk) {
+    chunk = {
+      cx, cy,
+      data: new Float32Array(CHUNK_SIZE * CHUNK_SIZE).fill(-1),
+      occupied: new Uint8Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
+    }
+    state.ui.toCommitChunk.set(key, chunk)
+  }
+
+  const i = localY * CHUNK_SIZE + localX
+
+  chunk.data[i] = noise;
+  chunk.occupied[i] = 1
 }
 
 function drawWorld() {
@@ -247,8 +260,8 @@ export function undo() {
     for (const [index, change] of localChunks.entries()) {
       const pixel = change.before
 
-      chunk.data[index] = pixel
-      chunk.occupied[index] = change.beforeOccupied
+      chunk.data[index] = pixel.data
+      chunk.occupied[index] = pixel.occupied
     }
 
     let cacheView = state.view.chunkOrders.get(chunkKey)
@@ -269,16 +282,15 @@ export function redo() {
     const chunkKey = cx + "," + cy;
     const chunk = state.world.chunks.get(chunkKey)
     console.assert(chunk != null, "Something Wrong With Chunk Source of Truth [Redo]")
-
     for (const [index, change] of localChunks.entries()) {
       const pixel = change.after
 
-      chunk.data[index] = pixel
-      chunk.occupied[index] = change.afterOccupied
+      chunk.data[index] = pixel.data
+      chunk.occupied[index] = pixel.occupied
     }
 
     const cacheView = state.view.chunkOrders.get(chunkKey)
-    console.assert(chunk != null, "Something Wrong With Chunk View Cache [Redo]")
+    console.assert(cacheView != null, "Something Wrong With Chunk View Cache [Redo]")
 
     cacheView.dirty = true
   }

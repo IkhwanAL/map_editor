@@ -1,6 +1,6 @@
 import { applyToolIndicator, requestRedraw } from "./draw.js";
 import { getChunkCoordinate, getLocalChunkCoordinate, getWorldCoordinate } from "./pixel.js";
-import { state, canvas, CHUNK_SIZE } from "./state.js";
+import { state, canvas, CHUNK_SIZE, undoEntry, clearRedo } from "./state.js";
 import { MouseEditorState } from "./state_option.js";
 import { clamp } from "./util.js";
 
@@ -9,33 +9,62 @@ canvas.addEventListener("mouseup", () => {
   state.ui.mouseDown = false;
   state.ui.strokeActive = false
 
-  for (const [coordinate, preview] of state.ui.previewChunks) {
-    const [cx, cy] = coordinate.split(",")
+  const affectedChunks = new Map()
+
+  for (const [coordinate, commit] of state.ui.toCommitChunk) {
+    const { cx, cy } = commit
+    let viewChunk = state.view.chunkOrders.get(coordinate)
+    if (viewChunk) {
+      viewChunk.dirty = true
+    }
 
     let chunk = state.world.chunks.get(coordinate)
     if (!chunk) {
-      const float32 = new Float32Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
+      const float32 = new Float32Array(CHUNK_SIZE * CHUNK_SIZE).fill(-1)
       const uint8 = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
       chunk = { cx: cx, cy: cy, data: float32, occupied: uint8, dirty: false }
       state.world.chunks.set(coordinate, chunk)
     }
 
-    const img = preview.ctx.getImageData(0, 0, CHUNK_SIZE, CHUNK_SIZE)
-    const pixels = img.data
+    const undoChunks = new Map()
 
     for (let x = 0; x < CHUNK_SIZE * CHUNK_SIZE; x++) {
-      const p = x * 4
-      const value = pixels[p] / 255
-      chunk.data[x] = value * 2 - 1
-      chunk.occupied[x] = pixels[p + 3] ? 1 : 0
+      if (commit.occupied[x] === 0) continue
+
+      const prevValue = chunk.data[x]
+      const prevOccupied = chunk.occupied[x]
+
+      let newValue = commit.data[x]
+      const newOccupied = 1
+
+      if (prevValue !== newValue || prevOccupied !== newOccupied) {
+        undoChunks.set(x, {
+          before: { data: prevValue, occupied: prevOccupied },
+          after: { data: newValue, occupied: newOccupied }
+        })
+      }
+
+      chunk.data[x] = newValue
+      chunk.occupied[x] = newOccupied
     }
 
-    chunk.dirty = true
+    if (undoChunks.size > 0) {
+      affectedChunks.set(coordinate, undoChunks)
+      chunk.dirty = true
+    }
+
+  }
+
+  if (affectedChunks.size > 0) {
+    undoEntry.push(affectedChunks)
+    clearRedo()
   }
 
   state.ui.previewChunks.clear()
+  state.ui.toCommitChunk.clear()
 
   requestRedraw({ world: true, overlay: true })
+
 })
 
 canvas.addEventListener("wheel", (ev) => {
