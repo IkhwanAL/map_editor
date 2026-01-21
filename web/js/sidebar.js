@@ -1,15 +1,6 @@
-import { mapGenerator, drawMap, requestRedraw } from "./canvas.js"
+import { requestRedraw } from "./draw.js"
 import { state } from "./state.js"
 import { MouseEditorState, ToolState } from "./state_option.js"
-
-document.addEventListener("drawMap", e => {
-  let { generator } = state.world
-
-  Object.assign(generator, e.detail)
-
-  mapGenerator(generator)
-  drawMap()
-})
 
 document.getElementById("toolbar").addEventListener("click", (e) => {
   e.preventDefault()
@@ -43,7 +34,7 @@ function render() {
 
   if (state.ui.tool === ToolState.None) {
     state.ui.mode = MouseEditorState.Idle
-    requestRedraw({ overlay: true })
+    requestRedraw({ tool: true })
   } else {
     state.ui.mode = MouseEditorState.UsingTool
   }

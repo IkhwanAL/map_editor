@@ -7,3 +7,10 @@ export function clamp(value, min, max) {
   }
   return value
 }
+
+export function insideBrush(worldX, worldY, x, y, rad) {
+  const dx = worldX - x
+  const dy = worldY - y
+  return ((dx * dx) + (dy * dy)) <= (rad * rad)
+
+}

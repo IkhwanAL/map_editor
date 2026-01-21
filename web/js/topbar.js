@@ -1,4 +1,4 @@
-import { loadViewStateFromSavedState } from "./canvas.js"
+import { loadViewStateFromSavedState } from "./draw.js"
 import { state, newState, setWorldState, saveState, reformSavedState } from "./state.js"
 
 const overlayNewMap = document.getElementById("newMapOverlay")

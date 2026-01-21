@@ -1,314 +1,129 @@
-import { state, canvas, overlay, CHUNK_SIZE, undoEntry, redoEntry, clearRedo } from "./state.js"
-import { FractalNoise } from "./noise.js"
-import { ToolState } from "./state_option.js"
-import { createPixels, getChunkCoordinate, getLocalChunkCoordinate, getWorldCoordinate, updatePixels } from "./pixel.js"
+import { applyToolIndicator, requestRedraw } from "./draw.js";
+import { getChunkCoordinate, getLocalChunkCoordinate, getWorldCoordinate } from "./pixel.js";
+import { state, canvas, CHUNK_SIZE } from "./state.js";
+import { MouseEditorState } from "./state_option.js";
+import { clamp } from "./util.js";
 
-const ctx = canvas.getContext("2d")
-ctx.imageSmoothingEnabled = false
-const overlayCtx = overlay.getContext("2d")
+canvas.addEventListener("mouseup", () => {
+  state.ui.mode == MouseEditorState.Idle;
+  state.ui.mouseDown = false;
+  state.ui.strokeActive = false
 
-function getActualCanvasSize() {
-  const editorRect = editor.getBoundingClientRect()
-  state.ui.width = Math.ceil(editorRect.width)
-  state.ui.height = Math.ceil(editorRect.height)
+  for (const [coordinate, preview] of state.ui.previewChunks) {
+    const [cx, cy] = coordinate.split(",")
 
-  canvas.width = state.ui.width
-  canvas.height = state.ui.height
-
-  overlay.width = state.ui.width
-  overlay.height = state.ui.height
-
-  ctx.fillStyle = "#FFF"
-  ctx.fillRect(0, 0, state.ui.width, state.ui.height)
-}
-
-getActualCanvasSize()
-
-export function drawMap() {
-  state.view.dirty = true
-
-  for (const [coordinate, worldChunk] of state.world.chunks.entries()) {
-    if (!worldChunk.dirty) continue
-
-    const imageData = ctx.createImageData(CHUNK_SIZE, CHUNK_SIZE)
-    createPixels(worldChunk, imageData.data)
-
-    let viewChunk = state.view.chunkOrders.get(coordinate)
-    if (!viewChunk) {
-      const offscreen = new OffscreenCanvas(CHUNK_SIZE, CHUNK_SIZE)
-      viewChunk = { offscreen, dirty: false }
-      state.view.chunkOrders.set(coordinate, viewChunk)
-    }
-    const context = viewChunk.offscreen.getContext("2d")
-    context.imageSmoothingEnabled = false
-    context.putImageData(imageData, 0, 0)
-
-    worldChunk.dirty = false
-  }
-
-  undoEntry.push(structuredClone(state.affectedChunks))
-  state.affectedChunks.clear()
-
-  clearRedo()
-  requestRedraw({ world: true })
-}
-
-export function mapGenerator(option) {
-  const { permutationTable } = state.world
-
-  const minX = state.world.x - state.ui.brush.radius
-  const minY = state.world.y - state.ui.brush.radius
-
-  const maxX = state.world.x + state.ui.brush.radius
-  const maxY = state.world.y + state.ui.brush.radius
-
-  const height = maxY - minY
-  const width = maxX - minX
-
-  for (let sy = 0; sy < height; sy++) {
-    for (let sx = 0; sx < width; sx++) {
-      const worldX = Math.floor(minX + sx)
-      const worldY = Math.floor(minY + sy)
-
-      const dx = worldX - state.world.x
-      const dy = worldY - state.world.y
-
-      const insideCircle = ((dx * dx) + (dy * dy)) <= (state.ui.brush.radius * state.ui.brush.radius)
-
-      if (!insideCircle) continue
-
-      const noise = FractalNoise(worldX, worldY, permutationTable, option)
-      writeToChunk(worldX, worldY, noise)
-    }
-  }
-}
-
-function writeToChunk(worldX, worldY, noise) {
-  const cx = getChunkCoordinate(worldX)
-  const cy = getChunkCoordinate(worldY)
-
-  const key = cx + "," + cy
-  let chunk = state.world.chunks.get(key)
-  if (!chunk) {
-    const float32 = new Float32Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
-    const uint8 = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
-    chunk = { cx: cx, cy: cy, data: float32, occupied: uint8, dirty: false }
-    state.world.chunks.set(key, chunk)
-  }
-
-  const lx = getLocalChunkCoordinate(worldX, cx)
-  const ly = getLocalChunkCoordinate(worldY, cy)
-  const index = Math.floor(ly * CHUNK_SIZE + lx)
-
-  const prevChunk = chunk.data[index]
-  const prevChunkStatus = chunk.occupied[index]
-  const currentChunk = noise
-  const currChunkStatus = 1
-
-  let affectedChunk = state.affectedChunks.get(key)
-  if (!affectedChunk) {
-    affectedChunk = new Map()
-    state.affectedChunks.set(key, affectedChunk)
-  }
-
-  const localChunk = affectedChunk.get(index)
-  if (!localChunk) {
-    const change = {
-      before: prevChunk,
-      beforeOccupied: prevChunkStatus,
-      after: currentChunk,
-      afterOccupied: currChunkStatus,
+    let chunk = state.world.chunks.get(coordinate)
+    if (!chunk) {
+      const float32 = new Float32Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
+      const uint8 = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
+      chunk = { cx: cx, cy: cy, data: float32, occupied: uint8, dirty: false }
+      state.world.chunks.set(coordinate, chunk)
     }
 
-    affectedChunk.set(index, change)
-  }
+    const img = preview.ctx.getImageData(0, 0, CHUNK_SIZE, CHUNK_SIZE)
+    const pixels = img.data
 
-  chunk.data[index] = currentChunk
-  chunk.dirty = true
-  chunk.occupied[index] = currChunkStatus
-}
-
-function drawWorld() {
-  // Reset Screen Canvas
-  ctx.setTransform(1, 0, 0, 1, 0, 0)
-  ctx.clearRect(0, 0, state.ui.width, state.ui.height)
-
-  const cam = state.ui.camera
-  const zoom = state.ui.zoom
-
-  const tx = Math.round(-cam.x * zoom)
-  const ty = Math.round(-cam.y * zoom)
-
-  ctx.imageSmoothingEnabled = false
-
-  // Apply Camere Position
-  ctx.setTransform(zoom, 0, 0, zoom, tx, ty)
-
-  for (const [coordinate, chunk] of state.world.chunks.entries()) {
-    const worldX = getWorldCoordinate(chunk.cx)
-    const worldY = getWorldCoordinate(chunk.cy)
-
-    let chunkView = state.view.chunkOrders.get(coordinate)
-    if (chunkView && chunkView.dirty == false) {
-      ctx.drawImage(chunkView.offscreen, worldX, worldY)
-      continue
+    for (let x = 0; x < CHUNK_SIZE * CHUNK_SIZE; x++) {
+      const p = x * 4
+      const value = pixels[p] / 255
+      chunk.data[x] = value * 2 - 1
+      chunk.occupied[x] = pixels[p + 3] ? 1 : 0
     }
 
-    if (!chunkView) {
-      const offscreen = new OffscreenCanvas(CHUNK_SIZE, CHUNK_SIZE)
-      chunkView = { offscreen, dirty: false }
-      state.view.chunkOrders.set(coordinate, chunkView)
-    }
-
-    const offCtx = chunkView.offscreen.getContext("2d")
-    offCtx.imageSmoothingEnabled = false
-    offCtx.clearRect(0, 0, CHUNK_SIZE, CHUNK_SIZE)
-
-    const imageData = offCtx.getImageData(0, 0, CHUNK_SIZE, CHUNK_SIZE)
-    updatePixels(chunk, imageData.data)
-
-    offCtx.putImageData(imageData, 0, 0)
-    ctx.drawImage(chunkView.offscreen, worldX, worldY)
-
-    chunkView.dirty = false
-  }
-}
-
-function drawOverlay() {
-  overlayCtx.setTransform(1, 0, 0, 1, 0, 0)
-  overlayCtx.clearRect(0, 0, state.ui.width, state.ui.height)
-
-  const cam = state.ui.camera
-  const zoom = state.ui.zoom
-
-  overlayCtx.translate(-cam.x * zoom, -cam.y * zoom)
-  overlayCtx.scale(zoom, zoom)
-
-  switch (state.ui.tool) {
-    case ToolState.BrushTool:
-      // Create Full Circle Around Mouse
-      const rad = state.ui.brush.radius
-      overlayCtx.beginPath()
-      overlayCtx.strokeStyle = "rgba(0,0,255, 0.6)"
-      overlayCtx.arc(state.world.x, state.world.y, rad, 0, Math.PI * 2, false)
-      overlayCtx.stroke()
-      break;
-    default:
-      break;
-  }
-}
-
-let redrawWorld = false
-let redrawOverlay = false
-let needsRedraw = false
-
-export function requestRedraw({ world = false, overlay = false } = {}) {
-  redrawWorld ||= world
-  redrawOverlay ||= overlay
-
-  if (!needsRedraw) {
-    needsRedraw = true
-    requestAnimationFrame(frame)
-  }
-}
-
-function frame() {
-  if (redrawWorld) drawWorld()
-  if (redrawOverlay) drawOverlay()
-
-  redrawWorld = false
-  redrawOverlay = false
-  needsRedraw = false
-}
-
-export function loadViewStateFromSavedState(newState) {
-  const worldState = newState.world
-  const chunkOrders = new Map()
-  for (const chunk of worldState.chunks.values()) {
-    const pixels = new Uint8ClampedArray(CHUNK_SIZE * CHUNK_SIZE * 4)
-    updatePixels(chunk, pixels)
-
-    const imageData = new ImageData(pixels, CHUNK_SIZE, CHUNK_SIZE)
-    const offscreen = new OffscreenCanvas(CHUNK_SIZE, CHUNK_SIZE)
-    const offCtx = offscreen.getContext("2d")
-
-    offCtx.putImageData(imageData, 0, 0)
-
-    const key = `${chunk.cx},${chunk.cy}`
-
-    chunkOrders.set(key, {
-      offscreen: offscreen,
-      dirty: false
-    })
+    chunk.dirty = true
   }
 
-  state.view.chunkOrders = chunkOrders
+  state.ui.previewChunks.clear()
+
+  requestRedraw({ world: true, overlay: true })
+})
+
+canvas.addEventListener("wheel", (ev) => {
+  ev.preventDefault()
+  if (ev.deltaY < 0) {
+    state.ui.zoomUnits += 4
+  } else {
+    state.ui.zoomUnits -= 4
+  }
+
+  state.ui.zoomUnits = clamp(state.ui.zoomUnits, 4, 128)
+  state.ui.zoom = state.ui.zoomUnits / CHUNK_SIZE
 
   requestRedraw({ world: true })
+})
+
+function shouldHandleMouseMove() {
+  if (state.ui.mode == MouseEditorState.Idle) return false
+  return true
 }
 
-export function undo() {
-  const affectedChunks = undoEntry.pop()
-  if (!affectedChunks) {
+function panCamera(state, mouse) {
+  const zoom = state.ui.zoom
+
+  const deltaX = mouse.x - state.ui.lastMouseX
+  const deltaY = mouse.y - state.ui.lastMouseY
+
+  state.ui.camera.x -= deltaX / zoom
+  state.ui.camera.y -= deltaY / zoom
+}
+
+function handleMovingMouse(state, mouse) {
+  if (state.ui.mode == MouseEditorState.Dragging) {
+    panCamera(state, mouse)
+    requestRedraw({ world: true })
     return
   }
-  for (const [coordinate, localChunks] of affectedChunks.entries()) {
-    const [cx, cy] = coordinate.split(",")
-    const chunkKey = cx + "," + cy;
-    const chunk = state.world.chunks.get(chunkKey)
-    console.assert(chunk != null, "Something Wrong With Chunk Source of Truth [Undo]")
 
-    for (const [index, change] of localChunks.entries()) {
-      const pixel = change.before
+  if (state.ui.mode == MouseEditorState.UsingTool && state.ui.strokeActive) {
+    state.ui.strokeDirty = true
+    requestRedraw({ overlay: true })
+  }
+}
 
-      chunk.data[index] = pixel
-      chunk.occupied[index] = change.beforeOccupied
+canvas.addEventListener("mousedown", (ev) => {
+  if (state.ui.mode == MouseEditorState.Idle) return
+
+  state.ui.preview = Object.create(null)
+
+  const rect = canvas.getBoundingClientRect()
+  state.ui.lastMouseX = ev.clientX - rect.left
+  state.ui.lastMouseY = ev.clientY - rect.top
+
+  state.ui.mouseDown = true
+
+  if (state.ui.mode === MouseEditorState.UsingTool) {
+    state.ui.strokeActive = true
+
+    const brush = document.querySelector("brush-tool")
+    const configMap = brush.shadowRoot.querySelector("draw-map-tool")
+    const detail = {
+      octaves: configMap.octaves,
+      persistence: configMap.persistence,
+      lacunarity: configMap.lacunarity,
+      frequency: configMap.frequency
     }
-
-    let cacheView = state.view.chunkOrders.get(chunkKey)
-    console.assert(chunk != null, "Something Wrong With Chunk View Cache [Undo]")
-    cacheView.dirty = true
-
+    Object.assign(state.ui.strokeConfig.generatorConfig, detail)
   }
-  redoEntry.push(affectedChunks)
-  requestRedraw({ world: true })
-}
+})
 
-export function redo() {
-  const affectedChunks = redoEntry.pop()
-  if (!affectedChunks) return
-
-  for (const [coordinate, localChunks] of affectedChunks.entries()) {
-    const [cx, cy] = coordinate.split(",")
-    const chunkKey = cx + "," + cy;
-    const chunk = state.world.chunks.get(chunkKey)
-    console.assert(chunk != null, "Something Wrong With Chunk Source of Truth [Redo]")
-
-    for (const [index, change] of localChunks.entries()) {
-      const pixel = change.after
-
-      chunk.data[index] = pixel
-      chunk.occupied[index] = change.afterOccupied
-    }
-
-    const cacheView = state.view.chunkOrders.get(chunkKey)
-    console.assert(chunk != null, "Something Wrong With Chunk View Cache [Redo]")
-
-    cacheView.dirty = true
+canvas.addEventListener("mousemove", (ev) => {
+  if (!shouldHandleMouseMove()) {
+    return
   }
-  undoEntry.push(affectedChunks)
-  requestRedraw({ world: true })
-}
 
-export function applyTool(state) {
-  const { tool } = state.ui
+  applyToolIndicator(state)
 
-  switch (tool) {
-    case ToolState.BrushTool:
-      const brush = document.querySelector("brush-tool")
-      state.ui.brush.radius = brush.radius
-      break;
-    default:
-      break;
-  }
-}
+  const rect = canvas.getBoundingClientRect()
+
+  const mouseX = ev.clientX - rect.left
+  const mouseY = ev.clientY - rect.top
+
+  if (state.ui.mouseDown) handleMovingMouse(state, { x: mouseX, y: mouseY })
+  state.ui.lastMouseX = mouseX
+  state.ui.lastMouseY = mouseY
+
+  state.world.x = mouseX / state.ui.zoom + state.ui.camera.x
+  state.world.y = mouseY / state.ui.zoom + state.ui.camera.y
+
+  requestRedraw({ tool: true })
+})

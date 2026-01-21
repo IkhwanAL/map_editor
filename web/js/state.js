@@ -11,6 +11,11 @@ export const canvas = document.getElementById("canvas")
  */
 export const overlay = document.getElementById("overlay")
 
+/**
+ * @type {HTMLCanvasElement}
+ */
+export const tool = document.getElementById("toolLayer")
+
 export const CHUNK_SIZE = 16
 
 export function newState() {
@@ -27,15 +32,10 @@ export function newState() {
       x: 0,
       y: 0,
       permutationTable: [],
-      generator: {
-        octaves: null,
-        persistence: null,
-        lacunarity: null,
-        frequency: null,
-      },
       chunks: new Map()
     },
     ui: {
+      previewChunks: new Map(),
       width: 0,
       height: 0,
       space: false,
@@ -52,7 +52,13 @@ export function newState() {
       redoCmd: [],
       tool: null,
       mouseDown: false,
-      brush: {}
+      strokeActive: false,
+      strokeDirty: false,
+      strokeConfig: {
+        generatorConfig: {}
+      },
+      brush: {},
+      preview: []
     },
     // this is just cache, it disposable
     view: {
@@ -129,13 +135,6 @@ export function saveState(stateWorld) {
       3: stateWorld.seed3,
       4: stateWorld.seed4
     },
-    mapGenerator: {
-      octaves: stateWorld.generator.octaves,
-      persistence: stateWorld.generator.persistence,
-      lacunarity: stateWorld.generator.lacunarity,
-      frequency: stateWorld.generator.frequency,
-      amplitude: stateWorld.generator.amplitude,
-    },
     world: { chunks: newChunk }
   }
 
@@ -168,7 +167,6 @@ export function reformSavedState(newState) {
     seed2: newState.seed["2"],
     seed3: newState.seed["3"],
     seed4: newState.seed["4"],
-    generator: newState.mapGenerator,
     permutationTable: perm,
     chunks: chunks
   }
