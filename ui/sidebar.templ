@@ -3,12 +3,10 @@ package ui
 templ SidebarPage() {
 	<div class="sidebar-area">
 		<div class="tools" id="toolbar">
-			<button class="tool" id="draw-map" data-tool="draw-map">Draw Map Tool</button>
-			<button class="tool" id="brush" data-tool="brush">Brush Tools</button>
+			<button class="tool" id="brush" data-tool="brush-tool">Brush Tools</button>
 		</div>
 		<div class="tool-config">
-			<div id="draw-map-tool" hidden data-button="draw-map"><draw-map-tool></draw-map-tool></div>
-			<div id="brush-tool" hidden data-button="brush"></div>
+			<div id="brush-tool" hidden data-button="brush"><brush-tool></brush-tool></div>
 		</div>
 	</div>
 }
