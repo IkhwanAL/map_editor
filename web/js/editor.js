@@ -1,12 +1,18 @@
 import { redo, undo } from "./draw.js"
+import { renderSidebar } from "./sidebar.js"
 import { state } from "./state.js"
-import { MouseEditorState } from "./state_option.js"
+import { MouseEditorState, ToolState } from "./state_option.js"
 
 window.addEventListener("keydown", ev => {
   ev.preventDefault()
   if (ev.code == "Space" && state.ui.mode == MouseEditorState.Idle) {
     state.ui.space = true
     state.ui.mode = MouseEditorState.Dragging
+  }
+
+  if (ev.code == "Escape") {
+    state.ui.tool = ToolState.None
+    renderSidebar()
   }
 
   const isCtrlOrCmd = ev.ctrlKey || ev.metaKey

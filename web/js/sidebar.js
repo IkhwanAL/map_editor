@@ -2,6 +2,8 @@ import { requestRedraw } from "./draw.js"
 import { state } from "./state.js"
 import { MouseEditorState, ToolState } from "./state_option.js"
 
+const emptyRightSide = document.getElementById("empty-side")
+
 document.getElementById("toolbar").addEventListener("click", (e) => {
   e.preventDefault()
 
@@ -11,14 +13,16 @@ document.getElementById("toolbar").addEventListener("click", (e) => {
   }
 
   state.ui.tool = tool
-  render()
+  renderSidebar()
 })
 
 const tools = {
   "brush-tool": document.getElementById("brush-tool")
 }
 
-function render() {
+let activeChild = null
+
+export function renderSidebar() {
   for (const [name, el] of Object.entries(tools)) {
     const idButton = el.dataset.button
     const elButton = document.getElementById(idButton)
@@ -34,8 +38,16 @@ function render() {
 
   if (state.ui.tool === ToolState.None) {
     state.ui.mode = MouseEditorState.Idle
+    emptyRightSide.removeChild(activeChild)
     requestRedraw({ tool: true })
   } else {
     state.ui.mode = MouseEditorState.UsingTool
+    placeConfigurationInRightbar()
   }
+}
+
+function placeConfigurationInRightbar() {
+  activeChild = document.createElement("draw-map-tool")
+  activeChild.id = "draw-map-tool"
+  emptyRightSide.appendChild(activeChild)
 }

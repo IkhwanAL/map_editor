@@ -85,14 +85,14 @@ function storeChunk(worldX, worldY, noise) {
   viewChunk.ctx.fillStyle = `rgb(${v},${v},${v})`
   viewChunk.ctx.fillRect(localX, localY, 1, 1)
 
-  let chunk = state.ui.toCommitChunk.get(key)
+  let chunk = state.ui.userCommand.snapshot.get(key)
   if (!chunk) {
     chunk = {
       cx, cy,
       data: new Float32Array(CHUNK_SIZE * CHUNK_SIZE).fill(-1),
       occupied: new Uint8Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
     }
-    state.ui.toCommitChunk.set(key, chunk)
+    state.ui.userCommand.snapshot.set(key, chunk)
   }
 
   const i = localY * CHUNK_SIZE + localX
@@ -121,6 +121,7 @@ function drawWorld() {
     const worldX = getWorldCoordinate(chunk.cx)
     const worldY = getWorldCoordinate(chunk.cy)
 
+    // Use the Cache Does not need to compute
     let chunkView = state.view.chunkOrders.get(coordinate)
     if (chunkView && chunkView.dirty == false) {
       ctx.drawImage(chunkView.offscreen, worldX, worldY)
@@ -251,18 +252,15 @@ export function undo() {
   if (!affectedChunks) {
     return
   }
-  for (const [coordinate, localChunks] of affectedChunks.entries()) {
-    const [cx, cy] = coordinate.split(",")
+  for (const change of affectedChunks) {
+    const { cx, cy, index } = change;
     const chunkKey = cx + "," + cy;
     const chunk = state.world.chunks.get(chunkKey)
     console.assert(chunk != null, "Something Wrong With Chunk Source of Truth [Undo]")
 
-    for (const [index, change] of localChunks.entries()) {
-      const pixel = change.before
-
-      chunk.data[index] = pixel.data
-      chunk.occupied[index] = pixel.occupied
-    }
+    const pixel = change.before;
+    chunk.data[index] = pixel.data
+    chunk.occupied[index] = pixel.occupied
 
     let cacheView = state.view.chunkOrders.get(chunkKey)
     console.assert(chunk != null, "Something Wrong With Chunk View Cache [Undo]")
@@ -277,17 +275,16 @@ export function redo() {
   const affectedChunks = redoEntry.pop()
   if (!affectedChunks) return
 
-  for (const [coordinate, localChunks] of affectedChunks.entries()) {
-    const [cx, cy] = coordinate.split(",")
+  for (const change of affectedChunks) {
+    const { cx, cy, index } = change
     const chunkKey = cx + "," + cy;
     const chunk = state.world.chunks.get(chunkKey)
     console.assert(chunk != null, "Something Wrong With Chunk Source of Truth [Redo]")
-    for (const [index, change] of localChunks.entries()) {
-      const pixel = change.after
 
-      chunk.data[index] = pixel.data
-      chunk.occupied[index] = pixel.occupied
-    }
+    const pixel = change.after
+
+    chunk.data[index] = pixel.data
+    chunk.occupied[index] = pixel.occupied
 
     const cacheView = state.view.chunkOrders.get(chunkKey)
     console.assert(cacheView != null, "Something Wrong With Chunk View Cache [Redo]")

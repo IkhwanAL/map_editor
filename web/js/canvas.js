@@ -1,67 +1,27 @@
+import { applyCommand, applyUndoRedoEffect, createCommand, parseCommand } from "./command.js";
 import { applyToolIndicator, requestRedraw } from "./draw.js";
-import { getChunkCoordinate, getLocalChunkCoordinate, getWorldCoordinate } from "./pixel.js";
 import { state, canvas, CHUNK_SIZE, undoEntry, clearRedo } from "./state.js";
 import { MouseEditorState } from "./state_option.js";
 import { clamp } from "./util.js";
 
 canvas.addEventListener("mouseup", () => {
-  state.ui.mode == MouseEditorState.Idle;
   state.ui.mouseDown = false;
-  state.ui.strokeActive = false
 
-  const affectedChunks = new Map()
+  if (!state.ui.strokeActive) return
+  state.ui.strokeActive = false;
 
-  for (const [coordinate, commit] of state.ui.toCommitChunk) {
-    const { cx, cy } = commit
-    let viewChunk = state.view.chunkOrders.get(coordinate)
-    if (viewChunk) {
-      viewChunk.dirty = true
-    }
+  const cmd = parseCommand(state.world, state.ui.userCommand);
+  applyCommand(state.world, state.view, cmd.affectedChunk)
 
-    let chunk = state.world.chunks.get(coordinate)
-    if (!chunk) {
-      const float32 = new Float32Array(CHUNK_SIZE * CHUNK_SIZE).fill(-1)
-      const uint8 = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
-      chunk = { cx: cx, cy: cy, data: float32, occupied: uint8, dirty: false }
-      state.world.chunks.set(coordinate, chunk)
-    }
+  const undoEffect = applyUndoRedoEffect(cmd.undoRedoInfo)
 
-    const undoChunks = new Map()
-
-    for (let x = 0; x < CHUNK_SIZE * CHUNK_SIZE; x++) {
-      if (commit.occupied[x] === 0) continue
-
-      const prevValue = chunk.data[x]
-      const prevOccupied = chunk.occupied[x]
-
-      let newValue = commit.data[x]
-      const newOccupied = 1
-
-      if (prevValue !== newValue || prevOccupied !== newOccupied) {
-        undoChunks.set(x, {
-          before: { data: prevValue, occupied: prevOccupied },
-          after: { data: newValue, occupied: newOccupied }
-        })
-      }
-
-      chunk.data[x] = newValue
-      chunk.occupied[x] = newOccupied
-    }
-
-    if (undoChunks.size > 0) {
-      affectedChunks.set(coordinate, undoChunks)
-      chunk.dirty = true
-    }
-
-  }
-
-  if (affectedChunks.size > 0) {
-    undoEntry.push(affectedChunks)
+  if (undoEffect.length > 0) {
+    undoEntry.push(undoEffect)
     clearRedo()
   }
 
+  state.ui.userCommand = createCommand(state.ui.tool, Date.now())
   state.ui.previewChunks.clear()
-  state.ui.toCommitChunk.clear()
 
   requestRedraw({ world: true, overlay: true })
 
@@ -123,8 +83,7 @@ canvas.addEventListener("mousedown", (ev) => {
   if (state.ui.mode === MouseEditorState.UsingTool) {
     state.ui.strokeActive = true
 
-    const brush = document.querySelector("brush-tool")
-    const configMap = brush.shadowRoot.querySelector("draw-map-tool")
+    const configMap = document.querySelector("draw-map-tool")
     const detail = {
       octaves: configMap.octaves,
       persistence: configMap.persistence,
@@ -132,6 +91,8 @@ canvas.addEventListener("mousedown", (ev) => {
       frequency: configMap.frequency
     }
     Object.assign(state.ui.strokeConfig.generatorConfig, detail)
+
+    state.ui.userCommand = createCommand(state.ui.tool, Date.now())
   }
 })
 

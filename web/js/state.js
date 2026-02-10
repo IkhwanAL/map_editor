@@ -34,8 +34,9 @@ export function newState() {
       permutationTable: [],
       chunks: new Map()
     },
+    // This is Ui Control
     ui: {
-      toCommitChunk: new Map(),
+      // toCommitChunk: new Map(),
       previewChunks: new Map(),
       width: 0,
       height: 0,
@@ -59,7 +60,12 @@ export function newState() {
         generatorConfig: {}
       },
       brush: {},
-      preview: []
+      preview: [],
+      userCommand: {
+        type: "",
+        timestamp: 0,
+        snapshot: new Map()
+      },
     },
     // this is just cache, it disposable
     view: {
@@ -67,10 +73,6 @@ export function newState() {
       dirty: false,
       map: [],
     },
-    /**
-     * @type Map<string, Map<index, any>>
-     */
-    affectedChunks: new Map()
   }
 
   const { perm, seed1, seed2, seed3, seed4 } = setupGenerator()

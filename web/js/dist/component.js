@@ -602,7 +602,6 @@ class Mt extends v {
           <input type="number" min="10" max="100" step="5" .value=${this.radius} @input=${this.changeInput("radius")}/>
         </div>
       </div>
-      <draw-map-tool></draw-map-tool>
     `;
   }
 }
