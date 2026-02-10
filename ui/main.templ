@@ -17,6 +17,14 @@ templ ScriptImport() {
 	<script type="module" src="js/dist/component.js"></script>
 }
 
+templ CssImport() {
+	<link rel="stylesheet" href="css/index.css"/>
+	<link rel="stylesheet" href="css/editor.css"/>
+	<link rel="stylesheet" href="css/modal.css"/>
+	<link rel="stylesheet" href="css/topbar.css"/>
+	<link rel="stylesheet" href="css/sidebar.css"/>
+}
+
 templ MainPage() {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -24,11 +32,7 @@ templ MainPage() {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			@ScriptImport()
-			<link rel="stylesheet" href="css/index.css"/>
-			<link rel="stylesheet" href="css/editor.css"/>
-			<link rel="stylesheet" href="css/modal.css"/>
-			<link rel="stylesheet" href="css/topbar.css"/>
-			<link rel="stylesheet" href="css/sidebar.css"/>
+			@CssImport()
 			<title>Map Editor</title>
 		</head>
 		<body>
@@ -39,6 +43,7 @@ templ MainPage() {
 					<div class="main">
 						@EditorPage()
 					</div>
+					@RightSidebarPage()
 				</div>
 				@NewMapModal()
 			</div>

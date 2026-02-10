@@ -1,5 +1,6 @@
-.sidebar-area {
-  border-right: 4px solid transparent;
+.sidebar-area,
+.right-sidebar-area {
+  border: 2px solid black;
   overflow: auto;
   width: max-content;
   flex-shrink: 0;
@@ -15,7 +16,6 @@
   background-color: #f1f1f1;
   color: #000;
   margin: 4px;
-  font-size: 20px;
   text-align: center;
   border: 2px solid black;
 }

@@ -1,4 +1,4 @@
-import { CHUNK_SIZE } from "./state";
+import { CHUNK_SIZE } from "./state.js";
 
 export function createCommand(type, timestamp) {
   return {
@@ -14,32 +14,41 @@ export function parseCommand(world, command) {
 
   for (const [coordinate, commit] of command.snapshot) {
     const chunk = world.chunks.get(coordinate)
+    affectedChunk.set(coordinate, commit)
     for (let x = 0; x < CHUNK_SIZE * CHUNK_SIZE; x++) {
-      if (commit.occupied[x]) return
-
-      affectedChunk.set(coordinate, commit)
-
-      if (commit.data[x] != chunk.data[x] || commit.occupied[x] != chunk.occupied[x]) {
-        undoRedoInfo.push({
-          index: x,
-          cx: commit.cx,
-          cy: commit.cy,
-          before: { data: chunk.data[x] ?? 0, occupied: chunk.occupied[x] ?? -1 },
-          after: { data: commit.data[x], occupied: commit.occupied[x] }
-        })
-      }
+      if (commit.data[x] == -1 && commit.occupied[x] == 0) continue
+      undoRedoInfo.push({
+        index: x,
+        cx: commit.cx,
+        cy: commit.cy,
+        before: { data: chunk?.data[x] ?? -1, occupied: chunk?.occupied[x] ?? 0 },
+        after: { data: commit.data[x], occupied: commit.occupied[x] }
+      })
     }
   }
 
   return { affectedChunk, undoRedoInfo }
 }
 
+export function applyUndoRedoEffect(undoRedoInfo) {
+  const undoApplied = []
+  for (const change of undoRedoInfo) {
+    if (change.before.data != change.after.data || change.before.occupied != change.after.occupied) {
+      undoApplied.push(change)
+    }
+  }
+
+  return undoApplied
+}
+
 export function applyCommand(world, view, affectedChunk) {
-  for (const [coor, commit] of affectedChunk) {
-    let viewChunk = view.chunkOrders.get(coor)
+  for (const [coordinate, commit] of affectedChunk) {
+    const { cx, cy } = commit
+    // if it's part of cache, mark it dirty
+    let viewChunk = view.chunkOrders.get(coordinate)
     if (viewChunk) viewChunk.dirty = true
 
-    let chunk = world.chunks.get(coor)
+    let chunk = world.chunks.get(coordinate)
     if (!chunk) {
       const float32 = new Float32Array(CHUNK_SIZE * CHUNK_SIZE).fill(-1)
       const uint8 = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
@@ -48,10 +57,9 @@ export function applyCommand(world, view, affectedChunk) {
     }
 
     for (let x = 0; x < CHUNK_SIZE * CHUNK_SIZE; x++) {
-      chunk.data[x] = commit.data
-      chunk.occupied[x] = commit.occupied
+      if (commit.data[x] == -1 && commit.occupied[x] == 0) continue
+      chunk.data[x] = commit.data[x]
+      chunk.occupied[x] = commit.occupied[x]
     }
-
-    chunk.dirty = true
   }
 }

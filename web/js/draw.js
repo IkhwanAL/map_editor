@@ -121,6 +121,7 @@ function drawWorld() {
     const worldX = getWorldCoordinate(chunk.cx)
     const worldY = getWorldCoordinate(chunk.cy)
 
+    // Use the Cache Does not need to compute
     let chunkView = state.view.chunkOrders.get(coordinate)
     if (chunkView && chunkView.dirty == false) {
       ctx.drawImage(chunkView.offscreen, worldX, worldY)
@@ -252,14 +253,14 @@ export function undo() {
     return
   }
   for (const change of affectedChunks) {
-    const { cx, cy, x } = change;
+    const { cx, cy, index } = change;
     const chunkKey = cx + "," + cy;
     const chunk = state.world.chunks.get(chunkKey)
     console.assert(chunk != null, "Something Wrong With Chunk Source of Truth [Undo]")
 
     const pixel = change.before;
-    chunk.data[x] = pixel.data
-    chunk.occupied[x] = pixel.occupied
+    chunk.data[index] = pixel.data
+    chunk.occupied[index] = pixel.occupied
 
     let cacheView = state.view.chunkOrders.get(chunkKey)
     console.assert(chunk != null, "Something Wrong With Chunk View Cache [Undo]")
@@ -274,16 +275,16 @@ export function redo() {
   const affectedChunks = redoEntry.pop()
   if (!affectedChunks) return
 
-  for (const change of affectedChunks.entries()) {
-    const { cx, cy, x } = change
+  for (const change of affectedChunks) {
+    const { cx, cy, index } = change
     const chunkKey = cx + "," + cy;
     const chunk = state.world.chunks.get(chunkKey)
     console.assert(chunk != null, "Something Wrong With Chunk Source of Truth [Redo]")
 
     const pixel = change.after
 
-    chunk.data[x] = pixel.data
-    chunk.occupied[x] = pixel.occupied
+    chunk.data[index] = pixel.data
+    chunk.occupied[index] = pixel.occupied
 
     const cacheView = state.view.chunkOrders.get(chunkKey)
     console.assert(cacheView != null, "Something Wrong With Chunk View Cache [Redo]")

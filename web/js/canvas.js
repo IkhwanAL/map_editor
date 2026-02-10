@@ -1,4 +1,4 @@
-import { applyCommand, createCommand, parseCommand } from "./command.js";
+import { applyCommand, applyUndoRedoEffect, createCommand, parseCommand } from "./command.js";
 import { applyToolIndicator, requestRedraw } from "./draw.js";
 import { state, canvas, CHUNK_SIZE, undoEntry, clearRedo } from "./state.js";
 import { MouseEditorState } from "./state_option.js";
@@ -7,19 +7,20 @@ import { clamp } from "./util.js";
 canvas.addEventListener("mouseup", () => {
   if (!state.ui.strokeActive) return
 
-  state.ui.mode = MouseEditorState.Idle;
   state.ui.mouseDown = false;
-  state.ui.strokeActive = false
+  state.ui.strokeActive = false;
 
-  const cmd = parseCommand(state.ui.userCommand, state.ui);
-
+  const cmd = parseCommand(state.world, state.ui.userCommand);
   applyCommand(state.world, state.view, cmd.affectedChunk)
 
-  if (cmd.undoRedoEffect.size > 0) {
-    undoEntry.push(cmd.undoRedoInfo)
+  const undoEffect = applyUndoRedoEffect(cmd.undoRedoInfo)
+
+  if (undoEffect.length > 0) {
+    undoEntry.push(undoEffect)
     clearRedo()
   }
 
+  state.ui.userCommand = createCommand(state.ui.tool, Date.now())
   state.ui.previewChunks.clear()
 
   requestRedraw({ world: true, overlay: true })
@@ -82,8 +83,7 @@ canvas.addEventListener("mousedown", (ev) => {
   if (state.ui.mode === MouseEditorState.UsingTool) {
     state.ui.strokeActive = true
 
-    const brush = document.querySelector("brush-tool")
-    const configMap = brush.shadowRoot.querySelector("draw-map-tool")
+    const configMap = document.querySelector("draw-map-tool")
     const detail = {
       octaves: configMap.octaves,
       persistence: configMap.persistence,
