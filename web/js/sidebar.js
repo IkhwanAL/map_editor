@@ -13,7 +13,7 @@ document.getElementById("toolbar").addEventListener("click", (e) => {
   }
 
   state.ui.tool = tool
-  render()
+  renderSidebar()
 })
 
 const tools = {
@@ -22,7 +22,7 @@ const tools = {
 
 let activeChild = null
 
-function render() {
+export function renderSidebar() {
   for (const [name, el] of Object.entries(tools)) {
     const idButton = el.dataset.button
     const elButton = document.getElementById(idButton)

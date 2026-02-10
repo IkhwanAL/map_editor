@@ -5,9 +5,9 @@ import { MouseEditorState } from "./state_option.js";
 import { clamp } from "./util.js";
 
 canvas.addEventListener("mouseup", () => {
-  if (!state.ui.strokeActive) return
-
   state.ui.mouseDown = false;
+
+  if (!state.ui.strokeActive) return
   state.ui.strokeActive = false;
 
   const cmd = parseCommand(state.world, state.ui.userCommand);
