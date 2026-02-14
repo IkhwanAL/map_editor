@@ -1,7 +1,8 @@
 import { redo, undo } from "./draw.js"
-import { renderSidebar } from "./sidebar.js"
+import { renderRightSidebar } from "./sidebar.js"
 import { state } from "./state.js"
 import { MouseEditorState, ToolState } from "./state_option.js"
+import { handleDebugLayer } from "./topbar.js"
 
 window.addEventListener("keydown", ev => {
   ev.preventDefault()
@@ -12,12 +13,13 @@ window.addEventListener("keydown", ev => {
 
   if (ev.code == "Escape") {
     state.ui.tool = ToolState.None
-    renderSidebar()
+    renderRightSidebar()
   }
 
   const isCtrlOrCmd = ev.ctrlKey || ev.metaKey
   const isZKey = ev.key === "z"
   const isRKey = ev.key === "r"
+  const isDKey = ev.key === "d"
 
   if (isCtrlOrCmd && isZKey) {
     undo()
@@ -27,7 +29,9 @@ window.addEventListener("keydown", ev => {
     redo()
   }
 
-  return
+  if (isCtrlOrCmd && isDKey) {
+    handleDebugLayer()
+  }
 })
 
 window.addEventListener("keyup", ev => {

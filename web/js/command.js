@@ -1,10 +1,13 @@
+import { getOrCreateWorldChunk, getViewCacheChunkToChange } from "./chunk.js";
 import { CHUNK_SIZE } from "./state.js";
+import { EmptyTile, NoCollision, StrokeMode } from "./state_option.js";
 
-export function createCommand(type, timestamp) {
+export function createCommand(type, timestamp, mode) {
   return {
     type: type,
     timestamp: timestamp,
-    snapshot: new Map()
+    snapshot: new Map(),
+    mode: mode
   }
 }
 
@@ -14,17 +17,48 @@ export function parseCommand(world, command) {
 
   for (const [coordinate, commit] of command.snapshot) {
     const chunk = world.chunks.get(coordinate)
-    affectedChunk.set(coordinate, commit)
+    let affectedCommit = {
+      cx: commit.cx,
+      cy: commit.cy,
+      collision: new Map(),
+      terrain: new Map(),
+      occupied: new Map()
+    }
     for (let x = 0; x < CHUNK_SIZE * CHUNK_SIZE; x++) {
-      if (commit.data[x] == -1 && commit.occupied[x] == 0) continue
+      const terrain = commit.terrain.get(x)
+      const collision = commit.collision.get(x)
+
+      const current = {
+        terrain: chunk?.terrain[x] ?? EmptyTile,
+        occupied: chunk?.occupied[x] ?? 0,
+        collision: chunk?.collision[x] ?? NoCollision
+      }
+
+      let next = { ...current }
+
+      if (terrain && terrain != EmptyTile) {
+        affectedCommit.terrain.set(x, terrain)
+        affectedCommit.occupied.set(x, 1) // Force To One since i don't have the tool to delete
+
+        current.terrain = terrain
+        current.occupied = 1
+      }
+
+      if (collision) {
+        affectedCommit.collision.set(x, collision)
+
+        current.collision = collision
+      }
+
       undoRedoInfo.push({
         index: x,
         cx: commit.cx,
         cy: commit.cy,
-        before: { data: chunk?.data[x] ?? -1, occupied: chunk?.occupied[x] ?? 0 },
-        after: { data: commit.data[x], occupied: commit.occupied[x] }
+        before: current,
+        after: next
       })
     }
+    affectedChunk.set(coordinate, affectedCommit)
   }
 
   return { affectedChunk, undoRedoInfo }
@@ -32,34 +66,41 @@ export function parseCommand(world, command) {
 
 export function applyUndoRedoEffect(undoRedoInfo) {
   const undoApplied = []
+
+  let diffTerrain = false
+  let diffOccupied = false
+  let diffCollision = false
+
   for (const change of undoRedoInfo) {
-    if (change.before.data != change.after.data || change.before.occupied != change.after.occupied) {
-      undoApplied.push(change)
-    }
+    if (change.before.terrain != change.after.terrain) diffTerrain = true
+    if (change.before.occupied != change.after.occupied) diffOccupied = true
+    if (change.before.collision != change.after.collision) diffCollision = true
+
+    if (diffTerrain || diffOccupied || diffCollision) undoApplied.push(change)
   }
 
   return undoApplied
 }
 
-export function applyCommand(world, view, affectedChunk) {
+export function applyCommand(world, view, mode, affectedChunk) {
   for (const [coordinate, commit] of affectedChunk) {
     const { cx, cy } = commit
     // if it's part of cache, mark it dirty
-    let viewChunk = view.chunkOrders.get(coordinate)
-    if (viewChunk) viewChunk.dirty = true
+    let viewChunks = getViewCacheChunkToChange(view, mode, coordinate)
+    if (viewChunks) viewChunks.dirty = true
 
-    let chunk = world.chunks.get(coordinate)
-    if (!chunk) {
-      const float32 = new Float32Array(CHUNK_SIZE * CHUNK_SIZE).fill(-1)
-      const uint8 = new Uint8Array(CHUNK_SIZE * CHUNK_SIZE).fill(0)
-      chunk = { cx: cx, cy: cy, data: float32, occupied: uint8, dirty: false }
-      world.chunks.set(coordinate, chunk)
+    let chunk = getOrCreateWorldChunk(world, coordinate, cx, cy)
+    for (let [x, value] of commit.terrain) {
+      chunk.terrain[x] = value
     }
 
-    for (let x = 0; x < CHUNK_SIZE * CHUNK_SIZE; x++) {
-      if (commit.data[x] == -1 && commit.occupied[x] == 0) continue
-      chunk.data[x] = commit.data[x]
-      chunk.occupied[x] = commit.occupied[x]
+    for (let [x, value] of commit.occupied) {
+      chunk.occupied[x] = value
     }
+
+    for (let [x, value] of commit.collision) {
+      chunk.collision[x] = value
+    }
+
   }
 }

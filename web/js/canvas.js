@@ -1,17 +1,21 @@
 import { applyCommand, applyUndoRedoEffect, createCommand, parseCommand } from "./command.js";
-import { applyToolIndicator, requestRedraw } from "./draw.js";
+import { requestRedraw } from "./draw.js";
 import { state, canvas, CHUNK_SIZE, undoEntry, clearRedo } from "./state.js";
-import { MouseEditorState } from "./state_option.js";
+import { MouseEditorState, TextureOption } from "./state_option.js";
+import { applyToolIndicator } from "./tool.js";
 import { clamp } from "./util.js";
+import { getMousePositionInCanvas } from "./device/mouse.js"
 
-canvas.addEventListener("mouseup", () => {
+tool.addEventListener("mouseup", () => {
   state.ui.mouseDown = false;
 
   if (!state.ui.strokeActive) return
   state.ui.strokeActive = false;
+  state.ui.strokeDirty = false
 
   const cmd = parseCommand(state.world, state.ui.userCommand);
-  applyCommand(state.world, state.view, cmd.affectedChunk)
+  // console.log(cmd)
+  applyCommand(state.world, state.view, state.ui.userCommand.mode, cmd.affectedChunk)
 
   const undoEffect = applyUndoRedoEffect(cmd.undoRedoInfo)
 
@@ -20,10 +24,11 @@ canvas.addEventListener("mouseup", () => {
     clearRedo()
   }
 
-  state.ui.userCommand = createCommand(state.ui.tool, Date.now())
+  state.ui.userCommand = createCommand(state.ui.tool, Date.now(), state.ui.userCommand.mode)
   state.ui.previewChunks.clear()
+  state.ui.previewCollisionChunks.clear()
 
-  requestRedraw({ world: true, overlay: true })
+  requestRedraw({ world: true, overlay: true, debug: state.ui.showDebugLayer })
 
 })
 
@@ -69,44 +74,44 @@ function handleMovingMouse(state, mouse) {
   }
 }
 
-canvas.addEventListener("mousedown", (ev) => {
+tool.addEventListener("mousedown", (ev) => {
   if (state.ui.mode == MouseEditorState.Idle) return
 
   state.ui.preview = Object.create(null)
 
-  const rect = canvas.getBoundingClientRect()
-  state.ui.lastMouseX = ev.clientX - rect.left
-  state.ui.lastMouseY = ev.clientY - rect.top
+  const { mouseX, mouseY } = getMousePositionInCanvas(canvas, ev.clientX, ev.clientY)
+
+  state.ui.lastMouseX = mouseX
+  state.ui.lastMouseY = mouseY
 
   state.ui.mouseDown = true
 
   if (state.ui.mode === MouseEditorState.UsingTool) {
     state.ui.strokeActive = true
 
-    const configMap = document.querySelector("draw-map-tool")
-    const detail = {
-      octaves: configMap.octaves,
-      persistence: configMap.persistence,
-      lacunarity: configMap.lacunarity,
-      frequency: configMap.frequency
-    }
-    Object.assign(state.ui.strokeConfig.generatorConfig, detail)
+    const option = document.querySelector(state.ui.tool)
 
-    state.ui.userCommand = createCommand(state.ui.tool, Date.now())
+    const config = {
+      mode: option.mode,
+      collision: option.collision,
+      texture: TextureOption[option.texture] ?? TextureOption.void
+    }
+
+    state.ui[state.ui.tool] = {
+      ...state.ui[state.ui.tool],
+      ...config
+    }
+    state.ui.userCommand = createCommand(state.ui.tool, Date.now(), option.mode)
   }
 })
 
-canvas.addEventListener("mousemove", (ev) => {
+tool.addEventListener("mousemove", (ev) => {
   if (!shouldHandleMouseMove()) {
     return
   }
-
   applyToolIndicator(state)
 
-  const rect = canvas.getBoundingClientRect()
-
-  const mouseX = ev.clientX - rect.left
-  const mouseY = ev.clientY - rect.top
+  const { mouseX, mouseY } = getMousePositionInCanvas(canvas, ev.clientX, ev.clientY)
 
   if (state.ui.mouseDown) handleMovingMouse(state, { x: mouseX, y: mouseY })
   state.ui.lastMouseX = mouseX
@@ -115,5 +120,5 @@ canvas.addEventListener("mousemove", (ev) => {
   state.world.x = mouseX / state.ui.zoom + state.ui.camera.x
   state.world.y = mouseY / state.ui.zoom + state.ui.camera.y
 
-  requestRedraw({ tool: true })
+  requestRedraw({ tool: true, debug: state.ui.showDebugLayer })
 })

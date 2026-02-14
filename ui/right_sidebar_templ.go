@@ -29,7 +29,7 @@ func RightSidebarPage() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"right-sidebar-area\"><div id=\"empty-side\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"right-sidebar-area\"><div class=\"vertical-bar\"><div id=\"empty-side\"></div><div id=\"editor-information\" class=\"end-of-corner\"></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

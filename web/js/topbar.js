@@ -1,4 +1,4 @@
-import { loadViewStateFromSavedState } from "./draw.js"
+import { clearDebugLayer, loadViewStateFromSavedState, requestRedraw } from "./draw.js"
 import { state, newState, setWorldState, saveState, reformSavedState } from "./state.js"
 
 const overlayNewMap = document.getElementById("newMapOverlay")
@@ -47,7 +47,7 @@ document.getElementById("saveCanvas").addEventListener("click", _ => {
 
   const a = document.createElement("a")
   a.href = url
-  a.download = "test.json" // Name Something Better or Open a File Choser
+  a.download = "test.json" // TODO: Name Something Better or Open a File Choser
   a.click()
 
   state.view.dirty = false
@@ -89,3 +89,46 @@ function loadState(newState) {
   setWorldState(worldState)
   loadViewStateFromSavedState(state)
 }
+
+// Keep Track Active Child When Trigger From Top Bar
+let activeChildInEditorInfo = {
+  showDebugLayer: null
+}
+
+document.getElementById("dropViewsOption").addEventListener("click", () => {
+  document.getElementById("views-option").classList.toggle("show")
+})
+
+export function handleDebugLayer() {
+  state.ui.showDebugLayer = !state.ui.showDebugLayer
+
+  if (state.ui.showDebugLayer) {
+    const p = document.createElement("p")
+    p.innerHTML = "Debug Layer On"
+
+    activeChildInEditorInfo.showDebugLayer = p
+
+    // Get Element From Right Side Bar
+    document.getElementById("editor-information").appendChild(p)
+    requestRedraw({ debug: true })
+  } else {
+    document.getElementById("editor-information").removeChild(activeChildInEditorInfo.showDebugLayer)
+    clearDebugLayer()
+  }
+}
+
+document.getElementById("toggleDebugLayer").addEventListener("click", () => handleDebugLayer())
+
+// Close the dropdown menu if the user clicks outside of it
+window.onclick = function (event) {
+  if (!event.target.matches('.dropbtn')) {
+    var dropdowns = document.getElementsByClassName("dropdown-content");
+    var i;
+    for (i = 0; i < dropdowns.length; i++) {
+      var openDropdown = dropdowns[i];
+      if (openDropdown.classList.contains('show')) {
+        openDropdown.classList.remove('show');
+      }
+    }
+  }
+} 

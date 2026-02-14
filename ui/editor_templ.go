@@ -29,7 +29,7 @@ func EditorPage() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"editor-area\" id=\"editor\"><canvas id=\"canvas\"></canvas><canvas id=\"toolLayer\"></canvas><canvas id=\"overlay\"></canvas></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"editor-area\" id=\"editor\"><canvas id=\"base\"></canvas><canvas id=\"overlay\"></canvas><canvas id=\"debug\"></canvas><canvas id=\"tool\"></canvas></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

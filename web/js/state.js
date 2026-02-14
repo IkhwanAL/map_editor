@@ -4,7 +4,7 @@ import { MouseEditorState } from "./state_option.js"
 /**
  * @type {HTMLCanvasElement}
  */
-export const canvas = document.getElementById("canvas")
+export const canvas = document.getElementById("base")
 
 /**
  * @type {HTMLCanvasElement}
@@ -14,7 +14,12 @@ export const overlay = document.getElementById("overlay")
 /**
  * @type {HTMLCanvasElement}
  */
-export const tool = document.getElementById("toolLayer")
+export const tool = document.getElementById("tool")
+
+/**
+ * @type {HTMLCanvasElement}
+ */
+export const debug = document.getElementById("debug")
 
 export const CHUNK_SIZE = 16
 
@@ -32,12 +37,12 @@ export function newState() {
       x: 0,
       y: 0,
       permutationTable: [],
-      chunks: new Map()
+      chunks: new Map(),
     },
     // This is Ui Control
     ui: {
-      // toCommitChunk: new Map(),
       previewChunks: new Map(),
+      previewCollisionChunks: new Map(),
       width: 0,
       height: 0,
       space: false,
@@ -56,20 +61,19 @@ export function newState() {
       mouseDown: false,
       strokeActive: false,
       strokeDirty: false,
-      strokeConfig: {
-        generatorConfig: {}
-      },
-      brush: {},
+      "brush-tool": {},
       preview: [],
       userCommand: {
         type: "",
         timestamp: 0,
         snapshot: new Map()
       },
+      showDebugLayer: false
     },
     // this is just cache, it disposable
     view: {
-      chunkOrders: new Map(),
+      terrainChunks: new Map(),
+      collisionChunks: new Map(),
       dirty: false,
       map: [],
     },
@@ -122,10 +126,10 @@ export function saveState(stateWorld) {
   const newChunk = {}
 
   for (const [key, chunk] of stateWorld.chunks.entries()) {
-    const data = Array.from(chunk.data)
+    const data = Array.from(chunk.terrain)
     const occupied = Array.from(chunk.occupied)
     newChunk[key] = {
-      data,
+      terrain: data,
       occupied
     }
   }
@@ -153,7 +157,7 @@ export function reformSavedState(newState) {
     const stateChunk = {
       cx: coordinates[0],
       cy: coordinates[1],
-      data: new Float32Array(chunk.data),
+      terrain: new Uint8Array(chunk.terrain),
       occupied: new Uint8Array(chunk.occupied),
       dirty: false
     }
@@ -176,3 +180,29 @@ export function reformSavedState(newState) {
 
   return worldState
 }
+
+const editor = document.getElementById("editor")
+
+export function getActualCanvasSize() {
+  const dpr = window.devicePixelRatio || 1
+  const editorRect = editor.getBoundingClientRect()
+  state.ui.width = Math.ceil(editorRect.width * dpr)
+  state.ui.height = Math.ceil(editorRect.height * dpr)
+
+  canvas.width = state.ui.width
+  canvas.height = state.ui.height
+
+  overlay.width = state.ui.width
+  overlay.height = state.ui.height
+
+  debug.width = state.ui.width
+  debug.height = state.ui.height
+
+  tool.width = state.ui.width
+  tool.height = state.ui.height
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  getActualCanvasSize()
+})
+

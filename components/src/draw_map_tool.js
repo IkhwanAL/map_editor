@@ -1,5 +1,6 @@
 import { LitElement, css, html } from "lit"
 import { debounce } from "./util.js"
+import { formStyle } from "./share_css.js";
 
 class DrawMapTool extends LitElement {
   static properties = {
@@ -21,25 +22,17 @@ class DrawMapTool extends LitElement {
     }, 500)
   }
 
-  static styles = css`
-    .generator {
-      width: max-content;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .form-input input[type="range"] {
-      flex: 1;
-    }
-
-    .form-input {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 2px;
-    }
-  `
+  static styles = [
+    formStyle,
+    css`
+      .generator {
+        width: max-content;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+    `
+  ]
 
   generateMap() {
     const detail = {

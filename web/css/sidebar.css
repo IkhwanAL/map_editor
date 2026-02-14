@@ -3,6 +3,7 @@
   border: 2px solid black;
   overflow: auto;
   width: max-content;
+  min-width: 120px;
   flex-shrink: 0;
 }
 
@@ -18,4 +19,14 @@
   margin: 4px;
   text-align: center;
   border: 2px solid black;
+}
+
+.vertical-bar {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.end-of-corner {
+  align-self: flex-end;
 }

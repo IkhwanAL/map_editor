@@ -29,7 +29,7 @@ func TopBar() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"topbar\"><div class=\"topbar-menu\" id=\"newCanvas\">New</div><div class=\"topbar-menu\" id=\"saveCanvas\">Save</div><div class=\"topbar-menu\" id=\"openCanvas\">Open</div><div class=\"topbar-menu\" id=\"other-tools\">Other-Tools</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"topbar\"><div class=\"topbar-menu\" id=\"newCanvas\">New</div><div class=\"topbar-menu\" id=\"saveCanvas\">Save</div><div class=\"topbar-menu\" id=\"openCanvas\">Open</div><div class=\"topbar-menu dropdown\" id=\"other-view\"><button type=\"button\" id=\"dropViewsOption\" class=\"dropbtn\">View</button><div id=\"views-option\" class=\"dropdown-content\"><div id=\"toggleDebugLayer\">Toggle Debug Layer</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

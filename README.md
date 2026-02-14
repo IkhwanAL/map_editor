@@ -24,4 +24,5 @@ Well... The project is tough but fun and joy for me, it's challenge my current u
 
 ## Current Work
 
-- Add Right Side For Configuration
+- Refactor Some Work.
+- Adding Collision 

@@ -1,18 +1,38 @@
 .editor-area {
+  position: relative;
   width: 100%;
   height: 100%;
   overflow: hidden;
-  position: relative;
 }
 
-#canvas,
-#overlay,
-#toolLayer {
+/* all layers */
+.editor-area canvas {
   position: absolute;
   top: 0;
   left: 0;
+  /* width: 100%; */
+  /* height: 100%; */
 }
 
-#overlay, #toolLayer {
+/* visual order */
+#base {
+  z-index: 10;
+}
+
+#overlay {
+  z-index: 20;
+}
+
+#debug {
+  z-index: 30;
+}
+
+#tool {
+  z-index: 40;
+}
+
+/* interaction rules */
+#overlay,
+#debug {
   pointer-events: none;
 }

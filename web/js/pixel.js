@@ -1,19 +1,37 @@
+import { debugCollisionColor, getColorRGB } from "./color.js";
 import { CHUNK_SIZE } from "./state.js";
-import { clamp } from "./util.js";
 
 export function updatePixels(chunk, pixels) {
   let rgbIdx = 0
-  for (let i = 0; i < chunk.data.length; i++) {
-    let data = chunk.data[i];
+  for (let i = 0; i < chunk.terrain.length; i++) {
+    let data = getColorRGB(chunk.terrain[i]);
     const occupied = chunk.occupied[i]
 
-    data = (data + 1) * 0.5
-    let value = clamp(data * 255 | 0, 0, 255)
     if (occupied == 1) {
-      pixels[rgbIdx++] = value
-      pixels[rgbIdx++] = value
-      pixels[rgbIdx++] = value
-      pixels[rgbIdx++] = 255
+      pixels[rgbIdx++] = data.r
+      pixels[rgbIdx++] = data.g
+      pixels[rgbIdx++] = data.b
+      pixels[rgbIdx++] = data.a * 255
+    } else {
+      pixels[rgbIdx++] = 0
+      pixels[rgbIdx++] = 0
+      pixels[rgbIdx++] = 0
+      pixels[rgbIdx++] = 0
+    }
+  }
+}
+
+export function setCollisionPixel(chunk, pixels) {
+  let rgbIdx = 0
+  for (let i = 0; i < chunk.collision.length; i++) {
+    let hasCollision = chunk.collision[i]
+
+    const color = debugCollisionColor
+    if (hasCollision == 1) {
+      pixels[rgbIdx++] = color.r
+      pixels[rgbIdx++] = color.g
+      pixels[rgbIdx++] = color.b
+      pixels[rgbIdx++] = color.a * 255
     } else {
       pixels[rgbIdx++] = 0
       pixels[rgbIdx++] = 0
@@ -26,16 +44,14 @@ export function updatePixels(chunk, pixels) {
 export function createPixels(chunk, pixels) {
   let rgbIdx = 0
   for (let index = 0; index < CHUNK_SIZE * CHUNK_SIZE; index++) {
-    let value = chunk.data[index]
+    let data = getColorRGB(chunk.terrain[index])
     const occupied = chunk.occupied[index]
 
-    value = (value + 1) * 0.5
-    value = clamp(value * 255 | 0, 0, 255)
     if (occupied == 1) {
-      pixels[rgbIdx++] = value
-      pixels[rgbIdx++] = value
-      pixels[rgbIdx++] = value
-      pixels[rgbIdx++] = 255
+      pixels[rgbIdx++] = data.r
+      pixels[rgbIdx++] = data.g
+      pixels[rgbIdx++] = data.b
+      pixels[rgbIdx++] = data.a * 255
     } else {
       pixels[rgbIdx++] = 0
       pixels[rgbIdx++] = 0
