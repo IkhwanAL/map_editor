@@ -14,11 +14,9 @@ tool.addEventListener("mouseup", () => {
   state.ui.strokeDirty = false
 
   const cmd = parseCommand(state.world, state.ui.userCommand);
-  // console.log(cmd)
   applyCommand(state.world, state.view, state.ui.userCommand.mode, cmd.affectedChunk)
 
   const undoEffect = applyUndoRedoEffect(cmd.undoRedoInfo)
-
   if (undoEffect.length > 0) {
     undoEntry.push(undoEffect)
     clearRedo()

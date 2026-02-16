@@ -40,14 +40,14 @@ export function parseCommand(world, command) {
         affectedCommit.terrain.set(x, terrain)
         affectedCommit.occupied.set(x, 1) // Force To One since i don't have the tool to delete
 
-        current.terrain = terrain
-        current.occupied = 1
+        next.terrain = terrain
+        next.occupied = 1
       }
 
       if (collision) {
         affectedCommit.collision.set(x, collision)
 
-        current.collision = collision
+        next.collision = collision
       }
 
       undoRedoInfo.push({

@@ -138,25 +138,10 @@ function drawDebugLayer() {
     const offCtx = chunkView.offscreen.getContext("2d")
     offCtx.imageSmoothingEnabled = false
 
-    const temp = structuredClone(offCtx.getImageData(0, 0, CHUNK_SIZE, CHUNK_SIZE))
     const imageData = offCtx.getImageData(0, 0, CHUNK_SIZE, CHUNK_SIZE)
     offCtx.clearRect(0, 0, CHUNK_SIZE, CHUNK_SIZE)
 
     setCollisionPixel(chunk, imageData.data)
-    // console.log(temp.data, imageData.data)
-    for (let index = 0; index < temp.data.length; index++) {
-      const tem = temp.data[index];
-      const ele = imageData.data[index];
-
-      if (tem != ele) {
-        console.warn("Not Same", tem, ele)
-      }
-
-      if (tem == ele) {
-        console.log("Same", tem, ele)
-      }
-    }
-
     offCtx.putImageData(imageData, 0, 0)
     debugCtx.drawImage(chunkView.offscreen, worldX, worldY)
 
@@ -203,7 +188,6 @@ function frame() {
   redrawDebugLayer = false
   needsRedraw = false
 
-  // console.log(state.world.chunks)
 }
 
 // TODO: Need to Come up a Better Function Name
@@ -228,7 +212,7 @@ function stroke() {
 
       const mode = state.ui[state.ui.tool].mode
       if (mode == StrokeMode.Terrain) {
-        value = state.ui[state.ui.tool].texture
+        value = Number(state.ui[state.ui.tool].texture)
         rgb = getColorRGB(value)
       } else {
         value = state.ui[state.ui.tool].collision
@@ -281,6 +265,7 @@ export function undo() {
     const pixel = change.before;
     chunk.terrain[index] = pixel.terrain
     chunk.occupied[index] = pixel.occupied
+    chunk.collision[index] = pixel.collision
 
     let cacheView = state.view.terrainChunks.get(chunkKey)
     console.assert(chunk != null, "Something Wrong With Chunk View Cache [Undo]")
@@ -302,9 +287,9 @@ export function redo() {
     console.assert(chunk != null, "Something Wrong With Chunk Source of Truth [Redo]")
 
     const pixel = change.after
-
     chunk.terrain[index] = pixel.terrain
     chunk.occupied[index] = pixel.occupied
+    chunk.collision[index] = pixel.collision
 
     const cacheView = state.view.terrainChunks.get(chunkKey)
     console.assert(cacheView != null, "Something Wrong With Chunk View Cache [Redo]")
